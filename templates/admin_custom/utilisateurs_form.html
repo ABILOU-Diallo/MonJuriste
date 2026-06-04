@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Modifier l'utilisateur - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-0 shadow p-4 bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{% url 'admin_utilisateurs' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+                    <h3 class="font-serif mb-0">Modifier les accès</h3>
+                </div>
+
+                <div class="p-3 border rounded bg-light mb-4 small">
+                    <strong>Utilisateur ciblé :</strong> {{ target_user.get_full_name|default:target_user.username }}<br>
+                    <strong>Identifiant unique :</strong> {{ target_user.username }}<br>
+                    <strong>Inscrit le :</strong> {{ target_user.date_joined|date:"d F Y" }}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold small">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-gold w-100 mt-3">
+                        <i class="fa-solid fa-floppy-disk me-2"></i>Enregistrer les modifications
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("id_role").classList.add("form-select");
+        document.getElementById("id_is_active").classList.add("form-check-input");
+    });
+</script>
+{% endblock %}

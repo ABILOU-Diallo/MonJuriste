@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Paiement de la consultation - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-0 shadow p-4 bg-white" style="border-radius: 16px;">
+                <div class="text-center mb-4">
+                    <i class="fa-solid fa-receipt text-warning display-4 mb-2"></i>
+                    <h3 class="font-serif">Règlement de la consultation</h3>
+                    <p class="text-muted">Demande #{{ demande.id }} : {{ demande.sujet }}</p>
+                </div>
+
+                <!-- Receipt Detail -->
+                <div class="bg-light p-3 rounded mb-4">
+                    <div class="d-flex justify-content-between mb-2 small text-muted">
+                        <span>Prestation</span>
+                        <span>Conseil Juridique (1h)</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small text-muted">
+                        <span>Avocat</span>
+                        <span>Maître {{ demande.avocat.user.get_full_name }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between text-navy fw-bold fs-5">
+                        <span>Montant à régler</span>
+                        <span>{{ tarif }} FCFA</span>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Provider Selection -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small d-block mb-3">Moyen de paiement Mobile Money</label>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="moyen_paiement" id="provider_om" value="ORANGE_MONEY" checked>
+                                <label class="btn btn-outline-warning w-100 py-3 d-flex flex-column align-items-center" for="provider_om">
+                                    <i class="fa-solid fa-wallet fs-2 mb-2 text-warning"></i>
+                                    <span class="fw-bold text-dark">Orange Money</span>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <input type="radio" class="btn-check" name="moyen_paiement" id="provider_mtn" value="MTN_MONEY">
+                                <label class="btn btn-outline-warning w-100 py-3 d-flex flex-column align-items-center" for="provider_mtn">
+                                    <i class="fa-solid fa-mobile-screen fs-2 mb-2 text-warning"></i>
+                                    <span class="fw-bold text-dark">MTN MoMo</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phone Number Input -->
+                    <div class="mb-4">
+                        <label for="telephone" class="form-label fw-bold small">Numéro de téléphone de facturation</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">+237</span>
+                            <input type="text" name="telephone" id="telephone" class="form-control form-control-lg" placeholder="Ex: 699999999" value="{{ user.telephone|default:'' }}" required>
+                        </div>
+                        <div class="form-text small text-muted">Saisissez le numéro sur lequel la demande de débit sera initiée.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-gold btn-lg w-100 py-3">
+                        <i class="fa-solid fa-shield-halved me-2"></i>Lancer la transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes Rendez-vous - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header text-center mb-5">
+        <h1 class="font-serif">Mes Rendez-vous</h1>
+        <p class="mb-0">Planifiez et gérez vos rendez-vous de consultation juridique.</p>
+    </div>
+
+    <!-- Paid Consultation Demands requiring scheduling -->
+    {% if demandes_a_planifier %}
+        <div class="card border-0 shadow-sm p-4 mb-5 bg-white" style="border-radius: 16px;">
+            <h5 class="font-serif text-warning mb-3"><i class="fa-solid fa-calendar-plus me-2"></i>Consultations en attente de planification</h5>
+            <p class="small text-muted">Vous avez réglé les honoraires pour les consultations suivantes. Veuillez proposer un créneau de rendez-vous pour chacune d'elles :</p>
+            
+            <div class="row g-3">
+                {% for dem in demandes_a_planifier %}
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 bg-light">
+                            <h6 class="fw-bold mb-1">{{ dem.sujet }}</h6>
+                            <p class="small text-muted mb-3">Avec Maître {{ dem.avocat.user.last_name }} (Tarif : {{ dem.avocat.tarif_horaire }} FCFA)</p>
+                            
+                            <form method="post" class="row g-2 align-items-end">
+                                {% csrf_token %}
+                                <input type="hidden" name="demande_id" value="{{ dem.id }}">
+                                <div class="col-md-7">
+                                    <label class="small fw-semibold mb-1">Date et heure souhaitées :</label>
+                                    {{ form.date_heure }}
+                                </div>
+                                <div class="col-md-5">
+                                    <button type="submit" class="btn btn-navy btn-sm w-100">Proposer la date</button>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <label class="small fw-semibold mb-1">Note pour la rencontre :</label>
+                                    <textarea name="motif" class="form-control form-control-sm" rows="1" placeholder="Optionnel (ex: Appel WhatsApp ou présentiel)"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Scheduled appointments table -->
+    <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+        <h5 class="font-serif text-primary mb-4"><i class="fa-solid fa-list-check text-warning me-2"></i>Historique des rendez-vous</h5>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4">ID</th>
+                        <th>Avocat</th>
+                        <th>Date & Heure</th>
+                        <th>Motif</th>
+                        <th>Statut</th>
+                        <th class="text-end px-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rdv in rdv_list %}
+                        <tr>
+                            <td class="px-4 fw-semibold">#{{ rdv.id }}</td>
+                            <td class="fw-semibold">Maître {{ rdv.avocat.user.get_full_name }}</td>
+                            <td>{{ rdv.date_heure|date:"d/m/Y à H:i" }}</td>
+                            <td class="small text-muted">{{ rdv.motif|default:"-" }}</td>
+                            <td>
+                                {% if rdv.statut == 'EN_ATTENTE' %}
+                                    <span class="badge bg-warning text-dark">En attente de validation</span>
+                                {% elif rdv.statut == 'ACCEPTE' %}
+                                    <span class="badge bg-success text-white">Accepté / Confirmé</span>
+                                {% elif rdv.statut == 'REJETE' %}
+                                    <span class="badge bg-danger text-white">Rejeté</span>
+                                {% elif rdv.statut == 'ANNULE' %}
+                                    <span class="badge bg-secondary text-white">Annulé</span>
+                                {% else %}
+                                    <span class="badge bg-dark text-white">Terminé</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end px-4">
+                                {% if rdv.statut == 'EN_ATTENTE' or rdv.statut == 'ACCEPTE' %}
+                                    <a href="{% url 'rendezvous_annuler_client' rdv.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir annuler ce rendez-vous ?')"><i class="fa-solid fa-xmark"></i> Annuler</a>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                Aucun rendez-vous programmé.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

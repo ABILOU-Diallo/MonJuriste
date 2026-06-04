@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Planning & Congés - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header text-center mb-5">
+        <h1 class="font-serif">Gestion de mon Planning</h1>
+        <p class="mb-0">Définissez vos horaires hebdomadaires réguliers et vos périodes d'absence.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Weekly Recurring Slots Configuration -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h4 class="font-serif text-primary mb-3"><i class="fa-solid fa-clock text-warning me-2"></i>Horaires hebdomadaires récurrents</h4>
+                <p class="small text-muted">Ces plages s'affichent sur votre profil public pour orienter les clients lors des demandes.</p>
+                
+                <!-- Add slot form -->
+                <form method="post" class="row g-2 align-items-end mb-4 border-bottom pb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_creneau">
+                    
+                    <div class="col-md-4">
+                        <label class="small fw-semibold mb-1">Jour :</label>
+                        {{ form_creneau.jour_semaine }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-semibold mb-1">Début :</label>
+                        {{ form_creneau.heure_debut }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-semibold mb-1">Fin :</label>
+                        {{ form_creneau.heure_fin }}
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-gold btn-sm w-100"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </form>
+
+                <!-- Slots List -->
+                <ul class="list-group list-group-flush">
+                    {% for c in creneaux %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <span class="fw-bold text-navy me-3" style="width: 100px; display: inline-block;">{{ c.get_jour_semaine_display }}</span>
+                                <span class="badge bg-light text-secondary border">{{ c.heure_debut|time:"H:i" }} - {{ c.heure_fin|time:"H:i" }}</span>
+                            </div>
+                            <a href="{% url 'delete_creneau' c.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce créneau ?')"><i class="fa-solid fa-trash-can"></i></a>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center text-muted px-0 py-3">
+                            Aucun créneau de travail configuré.
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Leave/Holiday Period Configuration -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h4 class="font-serif text-primary mb-3"><i class="fa-solid fa-plane-departure text-warning me-2"></i>Congés & Indisponibilités</h4>
+                <p class="small text-muted">Durant ces périodes, vos horaires de travail récurrents seront masqués du profil public.</p>
+                
+                <!-- Add leave form -->
+                <form method="post" class="row g-2 align-items-end mb-4 border-bottom pb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_conge">
+                    
+                    <div class="col-md-3">
+                        <label class="small fw-semibold mb-1">Début :</label>
+                        {{ form_conge.date_debut }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small fw-semibold mb-1">Fin :</label>
+                        {{ form_conge.date_fin }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small fw-semibold mb-1">Motif :</label>
+                        {{ form_conge.motif }}
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-gold btn-sm w-100"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </form>
+
+                <!-- Leaves List -->
+                <ul class="list-group list-group-flush">
+                    {% for con in conges %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <span class="fw-bold text-danger me-2"><i class="fa-solid fa-calendar-minus"></i> Du {{ con.date_debut|date:"d/m/Y" }} au {{ con.date_fin|date:"d/m/Y" }}</span>
+                                <div class="small text-muted">{{ con.motif|default:"Absence planifiée" }}</div>
+                            </div>
+                            <a href="{% url 'delete_conge' con.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette absence ?')"><i class="fa-solid fa-trash-can"></i></a>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-center text-muted px-0 py-3">
+                            Aucune absence ou congé planifié.
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

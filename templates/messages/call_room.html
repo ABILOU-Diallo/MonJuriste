@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Appel - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="chat-page py-4">
+    <div class="chat-window mx-auto shadow-sm p-0">
+        <div class="chat-header d-flex align-items-center justify-content-between px-4 py-3">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'conversation_detail' call.conversation.id %}" class="btn btn-icon btn-light me-3">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div class="rounded-circle overflow-hidden me-3 chat-avatar">
+                    {% if is_client %}
+                        {% if call.conversation.avocat.user.photo %}
+                            <img src="{{ call.conversation.avocat.user.photo.url }}" class="w-100 h-100" alt="Avatar">
+                        {% else %}
+                            <i class="fa-solid fa-user-tie"></i>
+                        {% endif %}
+                    {% else %}
+                        {% if call.conversation.client.user.photo %}
+                            <img src="{{ call.conversation.client.user.photo.url }}" class="w-100 h-100" alt="Avatar">
+                        {% else %}
+                            <i class="fa-solid fa-user"></i>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div>
+                    <h5 class="mb-1 text-white font-serif">
+                        {% if is_client %}
+                            Maître {{ call.conversation.avocat.user.get_full_name }}
+                        {% else %}
+                            {{ call.conversation.client.user.get_full_name }}
+                        {% endif %}
+                    </h5>
+                    <small class="text-white-50">Appel {{ call.get_call_type_display|lower }} • {{ call.get_status_display }}</small>
+                </div>
+            </div>
+            <div class="chat-header-actions d-flex align-items-center gap-2">
+                <button class="btn btn-icon btn-light"><i class="fa-solid fa-microphone"></i></button>
+                <button class="btn btn-icon btn-light"><i class="fa-solid fa-volume-high"></i></button>
+                <button class="btn btn-icon btn-light"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+            </div>
+        </div>
+
+        <div class="call-body d-flex flex-column align-items-center justify-content-center px-4 py-5 bg-light">
+            <div class="call-avatar rounded-circle overflow-hidden mb-3">
+                {% if is_client %}
+                    {% if call.conversation.avocat.user.photo %}
+                        <img src="{{ call.conversation.avocat.user.photo.url }}" class="w-100 h-100" alt="Avatar">
+                    {% else %}
+                        <i class="fa-solid fa-user-tie"></i>
+                    {% endif %}
+                {% else %}
+                    {% if call.conversation.client.user.photo %}
+                        <img src="{{ call.conversation.client.user.photo.url }}" class="w-100 h-100" alt="Avatar">
+                    {% else %}
+                        <i class="fa-solid fa-user"></i>
+                    {% endif %}
+                {% endif %}
+            </div>
+            <h4 class="mb-1">{{ call.get_call_type_display }}</h4>
+            <p class="text-muted mb-3">
+                {% if is_avocat %}
+                    {{ call.conversation.client.user.get_full_name }}
+                {% else %}
+                    {{ call.conversation.avocat.user.get_full_name }}
+                {% endif %}
+                {% if call.status == 'REQUESTED' %}
+                    vous invite à appeler.
+                {% elif call.status == 'ONGOING' %}
+                    appel en cours.
+                {% else %}
+                    appel terminé.
+                {% endif %}
+            </p>
+            <div class="mb-3 text-center">
+                <div class="badge bg-dark text-white px-3 py-2" id="call-timer" data-started-at="{{ call.started_at|date:'c' }}" data-ended-at="{% if call.ended_at %}{{ call.ended_at|date:'c' }}{% endif %}" data-status="{{ call.status }}">
+                    {% if call.status == 'REQUESTED' %}
+                        En attente • 00:00
+                    {% elif call.status == 'ONGOING' %}
+                        En cours • <span id="timer-value">00:00</span>
+                    {% else %}
+                        Terminé • {{ call.started_at|timeuntil:call.ended_at }}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="call-preview mb-4">
+                {% if call.call_type == 'VIDEO' %}
+                    <video id="local-video" autoplay muted playsinline class="rounded"></video>
+                    <div class="small text-muted mt-2">Votre vidéo locale. L'appel réel nécessitera le support de WebRTC.</div>
+                {% else %}
+                    <div class="audio-preview rounded p-4 bg-white shadow-sm mb-2">
+                        <i class="fa-solid fa-microphone fa-2x text-success"></i>
+                    </div>
+                    <div class="small text-muted">Votre micro est prêt. Activez le son ci-dessous.</div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-3">
+                {% if call.status == 'REQUESTED' and not call.accepted and user != call.initiator %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="accept">
+                        <button type="submit" class="btn btn-success btn-lg px-4">Accepter</button>
+                    </form>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="end">
+                    <button type="submit" class="btn btn-danger btn-lg px-4">Raccrocher</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-page { min-height: calc(100vh - 120px); background: #d9e6f2; }
+    .chat-window { max-width: 900px; border-radius: 25px; overflow: hidden; }
+    .chat-header { background: linear-gradient(135deg, #075e54, #128c7e); }
+    .chat-avatar { width: 55px; height: 55px; background: #dee1e6; display: flex; align-items: center; justify-content: center; }
+    .chat-avatar i { font-size: 1.3rem; color: #3a3a3a; }
+    .chat-header-actions .btn-icon { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .call-body { min-height: 60vh; }
+    .call-avatar { width: 130px; height: 130px; background: #ffffff; display: flex; align-items: center; justify-content: center; }
+    .call-avatar i { font-size: 3rem; color: #4b4b4b; }
+    .call-preview { width: 100%; max-width: 500px; text-align: center; }
+    .call-preview video { width: 100%; height: auto; max-height: 300px; border-radius: 18px; background: #000; }
+    .audio-preview { width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const callType = '{{ call.call_type }}';
+        if (callType === 'VIDEO') {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(stream => {
+                    const video = document.getElementById('local-video');
+                    if (video) {
+                        video.srcObject = stream;
+                    }
+                })
+                .catch(() => {
+                    console.warn('Accès caméra/micro refusé');
+                });
+        } else {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    console.log('Micro activé pour l’appel audio', stream);
+                })
+                .catch(() => {
+                    console.warn('Accès micro refusé');
+                });
+        }
+    });
+</script>
+
+<script>
+    // Timer for call duration
+    document.addEventListener('DOMContentLoaded', function(){
+        const timerEl = document.getElementById('call-timer');
+        if (!timerEl) return;
+        const status = timerEl.dataset.status;
+        const startedAt = timerEl.dataset.startedAt ? new Date(timerEl.dataset.startedAt) : null;
+        const endedAt = timerEl.dataset.endedAt ? new Date(timerEl.dataset.endedAt) : null;
+
+        function fmt(s){
+            const hrs = Math.floor(s/3600); const mins = Math.floor((s%3600)/60); const secs = s%60;
+            if (hrs>0) return `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+            return `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+        }
+
+        if (status === 'REQUESTED'){
+            // nothing to update
+            return;
+        }
+
+        if (status === 'ONGOING' && startedAt){
+            const display = document.getElementById('timer-value');
+            function tick(){
+                const now = new Date();
+                const diff = Math.floor((now.getTime() - startedAt.getTime())/1000);
+                if (display) display.textContent = fmt(diff);
+            }
+            tick();
+            window._callTimerInterval = setInterval(tick, 1000);
+        } else if (status === 'ENDED' && startedAt && endedAt){
+            const total = Math.max(0, Math.floor((endedAt.getTime() - startedAt.getTime())/1000));
+            timerEl.textContent = `Terminé • ${fmt(total)}`;
+        }
+    });
+</script>
+
+{% endblock %}

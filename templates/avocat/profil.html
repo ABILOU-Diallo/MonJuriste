@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Profil Cabinet - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row g-4">
+        <!-- Photo de Profil Cabinet -->
+        <div class="col-md-5 col-lg-4">
+            <div class="card border-0 shadow-sm p-4 bg-white text-center" style="border-radius: 16px;">
+                <div class="rounded-circle overflow-hidden mx-auto shadow-sm mb-4" style="width: 150px; height: 150px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center;">
+                    {% if request.user.photo %}
+                        <img src="{{ request.user.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
+                    {% else %}
+                        <i class="fa-solid fa-user-tie text-secondary display-1"></i>
+                    {% endif %}
+                </div>
+                <h5 class="font-serif mb-1">Maître {{ request.user.get_full_name }}</h5>
+                <p class="text-muted small">Cabinet d'avocat</p>
+                <hr>
+                <p class="text-muted small mb-0">
+                    <i class="fa-envelope me-2 fa-solid"></i>{{ request.user.email }}<br>
+                    <i class="fa-solid fa-phone me-2"></i>{{ request.user.telephone }}
+                </p>
+                {% if request.user.avocat_profile.is_approved %}
+                    <div class="mt-3 pt-3 border-top">
+                        <span class="badge bg-success text-white">
+                            <i class="fa-solid fa-check me-1"></i>Profil approuvé
+                        </span>
+                    </div>
+                {% else %}
+                    <div class="mt-3 pt-3 border-top">
+                        <span class="badge bg-warning text-dark">
+                            <i class="fa-solid fa-clock me-1"></i>En attente d'approbation
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Edit Profile Info -->
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h4 class="font-serif text-primary mb-4"><i class="fa-solid fa-user-tie text-warning me-2"></i>Informations de mon Cabinet</h4>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger shadow-sm small">
+                            Veuillez corriger les erreurs de saisie ci-dessous.
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label fw-bold small">Prénom</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label fw-bold small">Nom</label>
+                            {{ form.last_name }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label fw-bold small">Adresse Email</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.telephone.id_for_label }}" class="form-label fw-bold small">Téléphone de contact</label>
+                            {{ form.telephone }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.tarif_horaire.id_for_label }}" class="form-label fw-bold small">Honoraires de consultation (FCFA / Heure)</label>
+                        {{ form.tarif_horaire }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.photo.id_for_label }}" class="form-label fw-bold small">Photo de Profil Cabinet</label>
+                        {% if form.instance.photo %}
+                            <div class="mb-2">
+                                <img src="{{ form.instance.photo.url }}" class="rounded shadow-sm" style="width: 100px; height: 100px; object-fit: cover;">
+                            </div>
+                        {% endif %}
+                        {{ form.photo }}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small">Spécialités exercées</label>
+                        <div class="row g-2 px-2">
+                            {% for checkbox in form.specialites %}
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        {{ checkbox.tag }}
+                                        <label class="form-check-label small" for="{{ checkbox.id_for_label }}">
+                                            {{ checkbox.choice_label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label fw-bold small">Description / Parcours professionnel</label>
+                        {{ form.description }}
+                    </div>
+
+                    <button type="submit" class="btn btn-gold mt-2"><i class="fa-solid fa-save me-1"></i>Mettre à jour le profil</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <!-- Security and Account management -->
+        <div class="col-md-5 col-lg-4">
+            <!-- Deactivate Cabinet Account -->
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h4 class="font-serif text-danger mb-3"><i class="fa-solid fa-power-off me-2"></i>Retrait temporaire</h4>
+                <p class="small text-muted">La désactivation de votre compte retirera votre profil de la liste publique des avocats consultables. Vous pourrez réactiver votre compte en contactant le support.</p>
+                
+                <form method="post" onsubmit="return confirm('Désactiver temporairement votre cabinet ? Vous ne recevrez plus de demandes de rendez-vous.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="deactivate_account">
+                    <button type="submit" class="btn btn-outline-danger w-100 mt-2"><i class="fa-solid fa-circle-minus me-1"></i>Désactiver mon profil</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password Card -->
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h4 class="font-serif text-primary mb-4"><i class="fa-solid fa-lock text-warning me-2"></i>Sécurité de connexion</h4>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password">
+                    
+                    {% for field in password_form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold small">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-navy mt-2"><i class="fa-solid fa-key me-1"></i>Changer le mot de passe</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const textInputs = document.querySelectorAll("input[type='text'], input[type='password'], input[type='email'], input[type='number'], textarea");
+        textInputs.forEach(input => {
+            if (!input.classList.contains('form-check-input')) {
+                input.classList.add("form-control");
+            }
+        });
+    });
+</script>
+{% endblock %}

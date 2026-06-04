@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Trouver un Avocat - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header text-center mb-5">
+        <h1 class="font-serif">Nos Avocats Partenaires</h1>
+        <p class="mb-0">Trouvez et consultez les meilleurs experts juridiques du Cameroun.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Filter Column -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm p-4 bg-white sticky-top" style="border-radius: 16px; top: 100px; z-index: 10;">
+                <h5 class="font-serif mb-4"><i class="fa-solid fa-filter text-warning me-2"></i>Filtres</h5>
+                
+                <form method="get" action="{% url 'avocat_list' %}">
+                    <!-- Search Input -->
+                    <div class="mb-3">
+                        <label for="search" class="form-label small fw-bold">Recherche</label>
+                        <div class="input-group">
+                            <input type="text" name="q" id="search" class="form-control" placeholder="Nom, description..." value="{{ query }}">
+                            <button type="submit" class="btn btn-navy"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- Specialties list filter -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold">Spécialité</label>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="specialite" id="spec_all" value="" {% if not selected_specialite %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="form-check-label small" for="spec_all">
+                                    Toutes les spécialités
+                                </label>
+                            </div>
+                            {% for spec in specialites %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="specialite" id="spec_{{ spec.id }}" value="{{ spec.id }}" {% if selected_specialite == spec.id %}checked{% endif %} onchange="this.form.submit()">
+                                    <label class="form-check-label small" for="spec_{{ spec.id }}">
+                                        {{ spec.nom }} ({{ spec.num_avocats }})
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'avocat_list' %}" class="btn btn-sm btn-outline-secondary w-100">Réinitialiser</a>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lawyer Listing Column -->
+        <div class="col-lg-9">
+            <div class="row g-4">
+                {% for avo in avocats %}
+                    <div class="col-md-6 col-lg-6">
+                        <div class="card card-glass border-0 h-100 overflow-hidden">
+                            <div style="height: 200px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative;">
+                                {% if avo.user.photo %}
+                                    <img src="{{ avo.user.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
+                                {% else %}
+                                    <i class="fa-solid fa-user-tie text-secondary" style="font-size: 5rem;"></i>
+                                {% endif %}
+                                <div class="position-absolute bottom-0 start-0 bg-dark text-white px-3 py-1 m-2 rounded small fw-bold">
+                                    {{ avo.tarif_horaire }} FCFA / H
+                                </div>
+                            </div>
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="font-serif card-title mb-0">Maître {{ avo.user.get_full_name }}</h5>
+                                    <span class="rating-stars small">
+                                        <i class="fa-solid fa-star"></i> {{ avo.note_moyenne }} <span class="text-muted">({{ avo.total_avis }})</span>
+                                    </span>
+                                </div>
+                                <p class="card-text small text-muted text-truncate mb-3">{{ avo.description }}</p>
+                                
+                                <div class="mb-4">
+                                    {% for spec in avo.specialites.all %}
+                                        <span class="badge bg-light text-secondary border me-1">{{ spec.nom }}</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-auto row g-2">
+                                    <div class="col-12">
+                                        <a href="{% url 'start_conversation' avo.id %}" class="btn btn-sm btn-outline-primary w-100">
+                                            <i class="fa-solid fa-comments me-1"></i>Discuter
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-6">
+                                        <a href="{% url 'avocat_detail' avo.id %}" class="btn btn-sm btn-outline-navy w-100">Voir profil</a>
+                                    </div>
+                                    <div class="col-6">
+                                        <a href="{% url 'demande_creer' avo.id %}" class="btn btn-sm btn-gold w-100"><i class="fa-solid fa-calendar-plus me-1"></i>Consulter</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="card border-0 p-5 text-center shadow-sm">
+                            <i class="fa-solid fa-user-slash display-3 text-muted mb-3"></i>
+                            <h4>Aucun avocat trouvé</h4>
+                            <p class="text-muted">Essayez de modifier vos critères de recherche ou de réinitialiser les filtres.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

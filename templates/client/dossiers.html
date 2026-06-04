@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes Dossiers Juridiques - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header text-center mb-5">
+        <h1 class="font-serif">Suivi de mes Dossiers</h1>
+        <p class="mb-0">Consultez l'historique et les pièces jointes de vos affaires juridiques en cours.</p>
+    </div>
+
+    <div class="row g-4">
+        {% for dos in dossiers %}
+            <div class="col-md-6">
+                <div class="card card-glass border-0 p-4 h-100 bg-white">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h4 class="font-serif text-primary mb-0">{{ dos.titre }}</h4>
+                        <span class="badge {% if dos.statut == 'TERMINE' %}bg-secondary{% elif dos.statut == 'ACCEPTE' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            {{ dos.get_statut_display }}
+                        </span>
+                    </div>
+
+                    <p class="text-muted small mb-3">{{ dos.description|linebreaksbr }}</p>
+                    
+                    <div class="border-top pt-3">
+                        <h6 class="fw-bold small text-navy mb-2"><i class="fa-solid fa-paperclip me-2 text-warning"></i>Pièces jointes & Documents ({{ dos.documents.count }})</h6>
+                        
+                        <ul class="list-unstyled mb-0">
+                            {% for doc in dos.documents.all %}
+                                <li class="d-flex justify-content-between align-items-center py-2 border-bottom small">
+                                    <span class="text-muted"><i class="fa-regular fa-file-pdf me-2 text-danger"></i>{{ doc.titre }}</span>
+                                    <a href="{{ doc.fichier.url }}" download class="btn btn-sm btn-link text-warning p-0 text-decoration-none fw-bold"><i class="fa-solid fa-download me-1"></i>Télécharger</a>
+                                </li>
+                            {% empty %}
+                                <li class="text-muted py-2 small">Aucun document joint pour le moment.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
+                        <span>Avocat en charge : Maître {{ dos.avocat.user.get_full_name }}</span>
+                        <span>Ouvert le : {{ dos.created_at|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card border-0 p-5 text-center shadow-sm">
+                    <i class="fa-solid fa-folder-closed display-3 text-muted mb-3"></i>
+                    <h4>Aucun dossier juridique en cours</h4>
+                    <p class="text-muted">Vos dossiers s'affichent ici dès que vos consultations sont validées et lancées par vos avocats.</p>
+                    <a href="{% url 'avocat_list' %}" class="btn btn-gold mx-auto mt-3"><i class="fa-solid fa-plus me-1"></i>Trouver un Avocat</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

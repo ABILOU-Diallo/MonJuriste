@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}MonJuriste - Votre Conseil Juridique à Portée de Clic{% endblock %}
+
+{% block content %}
+<!-- Beautiful Hero Section -->
+<div class="hero-section text-center py-5 d-flex align-items-center" style="min-height: 500px;">
+    <div class="container my-auto">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto">
+                <h1 class="hero-title font-serif mb-4 animate__animated animate__fadeInUp">
+                    Votre consultation juridique, <br>
+                    <span class="text-warning">Simple et securisee</span>
+                </h1>
+                <p class="hero-subtitle mb-5 px-md-5">
+                    Trouvez l'avocat idéal au Cameroun selon votre besoin. Prenez rendez-vous, gérez vos dossiers et effectuez vos règlements d'honoraires de manière sécurisée en ligne.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'register' %}" class="btn btn-gold btn-lg"><i class="fa-solid fa-user-plus me-2"></i>Trouver un Avocat</a>
+                    <a href="{% url 'lawyer_register' %}" class="btn btn-outline-light btn-lg"><i class="fa-solid fa-briefcase me-2"></i>Je suis Avocat</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Platform Features -->
+<div class="container my-5 py-4">
+    <div class="text-center mb-5">
+        <h2 class="font-serif">Pourquoi choisir <span class="text-warning font-serif">Jurisconsult</span> ?</h2>
+        <p class="text-muted col-md-6 mx-auto">Une plateforme conçue pour simplifier vos démarches juridiques en toute sécurité et confidentialité.</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card card-glass h-100 p-4 border-0 text-center">
+                <div class="fs-1 text-warning mb-3"><i class="fa-solid fa-user-shield"></i></div>
+                <h4 class="font-serif">Avocats Vérifiés</h4>
+                <p class="small text-muted mb-0">Tous les avocats inscrits sur notre plateforme sont soumis à une vérification rigoureuse de leurs diplômes et de leur inscription au Barreau.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-glass h-100 p-4 border-0 text-center">
+                <div class="fs-1 text-warning mb-3"><i class="fa-solid fa-credit-card"></i></div>
+                <h4 class="font-serif">Paiements Locaux</h4>
+                <p class="small text-muted mb-0">Payez vos honoraires de consultation instantanément par MTN Mobile Money ou Orange Money sans carte bancaire.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-glass h-100 p-4 border-0 text-center">
+                <div class="fs-1 text-warning mb-3"><i class="fa-solid fa-folder-open"></i></div>
+                <h4 class="font-serif">Suivi Digital</h4>
+                <p class="small text-muted mb-0">Transmettez vos pièces justificatives, suivez l'avancement de votre dossier juridique et programmez des rendez-vous en ligne.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Specialties Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="font-serif">Domaines d'expertise</h2>
+            <p class="text-muted col-md-6 mx-auto">Consultez nos spécialistes dans divers domaines du droit camerounais.</p>
+        </div>
+        
+        <div class="row g-4">
+            {% for spec in specialites %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card border-0 shadow-sm h-100 p-4" style="border-radius: 12px;">
+                        <h5 class="font-serif text-primary"><i class="fa-solid fa-gavel text-warning me-2"></i>{{ spec.nom }}</h5>
+                        <p class="small text-muted mt-2">{{ spec.description|truncatewords:20 }}</p>
+                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                            <span class="badge bg-light text-primary border">{{ spec.num_avocats }} avocat{{ spec.num_avocats|pluralize }}</span>
+                            <a href="{% url 'avocat_list' %}?specialite={{ spec.id }}" class="btn btn-sm btn-link text-warning fw-bold text-decoration-none">Consulter <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center py-4">
+                    <p class="text-muted">Aucune spécialité disponible pour le moment.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Premium Lawyers Section -->
+<div class="container my-5 py-4">
+    <div class="text-center mb-5">
+        <h2 class="font-serif">Avocats à la une</h2>
+        <p class="text-muted col-md-6 mx-auto">Faites-vous conseiller par des professionnels d'expérience.</p>
+    </div>
+    
+    <div class="row g-4">
+        {% for avo in avocats_premium %}
+            <div class="col-md-4">
+                <div class="card card-glass h-100 border-0 overflow-hidden">
+                    <div style="height: 250px; background-color: #e2e8f0; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative;">
+                        {% if avo.photo %}
+                            <img src="{{ avo.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
+                        {% else %}
+                            <i class="fa-solid fa-user-tie text-secondary" style="font-size: 5rem;"></i>
+                        {% endif %}
+                        <div class="position-absolute bottom-0 start-0 bg-dark text-white px-3 py-1 m-2 rounded small fw-bold">
+                            {{ avo.tarif_horaire }} FCFA / H
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="font-serif card-title mb-0">Maître {{ avo.user.get_full_name }}</h5>
+                            <span class="rating-stars small">
+                                <i class="fa-solid fa-star"></i> {{ avo.note_moyenne }} <span class="text-muted">({{ avo.total_avis }})</span>
+                            </span>
+                        </div>
+                        <p class="card-text small text-muted text-truncate">{{ avo.description }}</p>
+                        <div class="mb-3">
+                            {% for spec in avo.specialites.all %}
+                                <span class="badge bg-light text-secondary border me-1">{{ spec.nom }}</span>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'avocat_detail' avo.id %}" class="btn btn-navy w-100"><i class="fa-solid fa-calendar-check me-2"></i>Prendre rendez-vous</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-4">
+                <p class="text-muted">Aucun avocat inscrit pour le moment.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Platform Stats Section -->
+<div class="bg-primary text-white py-5">
+    <div class="container text-center">
+        <div class="row g-4">
+            <div class="col-md-4">
+                <h2 class="text-warning display-4 fw-bold font-serif">{{ stats.total_avocats }}</h2>
+                <p class="small text-uppercase tracking-wider">Avocats Actifs</p>
+            </div>
+            <div class="col-md-4">
+                <h2 class="text-warning display-4 fw-bold font-serif">{{ stats.total_clients }}</h2>
+                <p class="small text-uppercase tracking-wider">Clients satisfaits</p>
+            </div>
+            <div class="col-md-4">
+                <h2 class="text-warning display-4 fw-bold font-serif">{{ stats.total_dossiers }}</h2>
+                <p class="small text-uppercase tracking-wider">Dossiers résolus</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

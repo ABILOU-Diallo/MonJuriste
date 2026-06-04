@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Connexion - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-5 mx-auto">
+            <div class="card card-glass border-0 p-4 shadow">
+                <div class="text-center mb-4">
+                    <i class="fa-solid fa-lock text-warning display-4 mb-2"></i>
+                    <h2 class="font-serif">Connexion</h2>
+                    <p class="text-muted">Accédez à votre espace sécurisé</p>
+                </div>
+                
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger shadow-sm small">
+                            Identifiants incorrects. Veuillez réessayer.
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label fw-bold small">Nom d'utilisateur</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-user text-secondary"></i></span>
+                            <input type="text" name="username" id="id_username" class="form-control" placeholder="Entrez votre nom d'utilisateur" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <label for="id_password" class="form-label fw-bold small">Mot de passe</label>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fa-solid fa-key text-secondary"></i></span>
+                            <input type="password" name="password" id="id_password" class="form-control" placeholder="Entrez votre mot de passe" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden field to handle redirection -->
+                    {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                    {% endif %}
+                    
+                    <button type="submit" class="btn btn-gold btn-lg w-100 mt-4">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>Se connecter
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="small text-muted mb-0">Nouveau sur MonJuriste ? <a href="{% url 'register' %}" class="text-warning fw-bold text-decoration-none">Créez votre compte</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

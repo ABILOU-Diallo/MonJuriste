@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Discussion - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="chat-page py-4">
+    <div class="chat-window mx-auto shadow-sm">
+        <div class="chat-header d-flex align-items-center justify-content-between px-4 py-3">
+            <div class="d-flex align-items-center">
+                <a href="{% url 'conversation_list' %}" class="btn btn-icon btn-light me-3">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </a>
+                <div class="rounded-circle overflow-hidden me-3 chat-avatar">
+                    {% if is_client %}
+                        {% if conversation.avocat.user.photo %}
+                            <img src="{{ conversation.avocat.user.photo.url }}" class="w-100 h-100" alt="Avatar">
+                        {% else %}
+                            <i class="fa-solid fa-user-tie"></i>
+                        {% endif %}
+                    {% else %}
+                        {% if conversation.client.user.photo %}
+                            <img src="{{ conversation.client.user.photo.url }}" class="w-100 h-100" alt="Avatar">
+                        {% else %}
+                            <i class="fa-solid fa-user"></i>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div>
+                    <h5 class="mb-1 text-white mb-0 font-serif">
+                        {% if is_client %}
+                            Maître {{ conversation.avocat.user.get_full_name }}
+                        {% else %}
+                            {{ conversation.client.user.get_full_name }}
+                        {% endif %}
+                    </h5>
+                    <small class="text-white-50">
+                        {% if is_client %}Avocat{% else %}Client{% endif %} • En ligne
+                    </small>
+                </div>
+            </div>
+            <div class="chat-header-actions d-flex align-items-center gap-2">
+                <a href="{% url 'start_call' conversation.id 'audio' %}" class="btn btn-icon btn-light" title="Appel audio">
+                    <i class="fa-solid fa-phone"></i>
+                </a>
+                <a href="{% url 'start_call' conversation.id 'video' %}" class="btn btn-icon btn-light" title="Appel vidéo">
+                    <i class="fa-solid fa-video"></i>
+                </a>
+                <button class="btn btn-icon btn-light"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+            </div>
+        </div>
+
+        <div class="chat-body" id="chat-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message-row {% if message.sender == user %}message-outgoing{% else %}message-incoming{% endif %}">
+                        <div class="message-bubble">
+                            {% if message.contenu %}
+                                <div class="message-text">{{ message.contenu|linebreaksbr }}</div>
+                            {% endif %}
+
+                            {% if message.file %}
+                                <div class="message-attachment mt-2">
+                                    {% if message.file.file_type == 'image' %}
+                                        <a href="{{ message.file.fichier.url }}" target="_blank">
+                                            <img src="{{ message.file.fichier.url }}" alt="Image" class="attachment-preview rounded">
+                                        </a>
+                                    {% elif message.file.file_type == 'video' %}
+                                        <video controls class="attachment-preview rounded">
+                                            <source src="{{ message.file.fichier.url }}">
+                                        </video>
+                                    {% elif message.file.file_type == 'audio' %}
+                                        <div class="audio-wrapper rounded bg-white p-2">
+                                            <audio controls class="w-100">
+                                                <source src="{{ message.file.fichier.url }}">
+                                            </audio>
+                                        </div>
+                                    {% else %}
+                                        <div class="file-attachment bg-white rounded p-3">
+                                            <i class="fa-solid fa-file-lines me-2 text-secondary"></i>
+                                            <a href="{{ message.file.fichier.url }}" target="_blank" class="text-decoration-none text-dark">
+                                                {{ message.file.fichier.name|truncatechars:30 }}
+                                            </a>
+                                            <div class="text-muted small mt-1">{{ message.file.get_file_size_mb }} MB</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="message-info small text-muted mt-1">
+                            {{ message.created_at|date:"H:i" }}{% if message.sender == user and message.lu %} • <i class="fa-solid fa-check-double text-success"></i>{% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-chat text-center py-5">
+                    <i class="fa-solid fa-comments-dollar display-4 text-muted mb-3"></i>
+                    <p class="text-muted mb-0">Aucun message pour le moment. Envoyez votre premier message !</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="chat-footer bg-white px-4 py-3">
+            <form method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+                {% csrf_token %}
+                <label for="fichier" class="btn btn-light btn-icon rounded-circle mb-0">
+                    <i class="fa-solid fa-paperclip text-secondary"></i>
+                </label>
+                <input type="file" id="fichier" name="fichier" class="d-none" accept="image/*,video/*,audio/*,.pdf,.doc,.docx">
+
+                <div class="flex-grow-1 position-relative">
+                    {{ form.contenu }}
+                </div>
+
+                <button type="submit" class="btn btn-success btn-icon rounded-circle mb-0">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+            <div id="fichier-preview" class="small text-success mt-2 d-none">
+                <i class="fa-solid fa-check me-1"></i><span id="fichier-name"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-page {
+        min-height: calc(100vh - 180px);
+        background: #d9e6f2;
+    }
+    .chat-window {
+        max-width: 900px;
+        min-height: 80vh;
+        border-radius: 25px;
+        overflow: hidden;
+        background: #f7f7f7;
+        display: flex;
+        flex-direction: column;
+    }
+    .chat-header {
+        background: linear-gradient(135deg, #075e54, #128c7e);
+    }
+    .btn-icon {
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        padding: 0;
+    }
+    .chat-avatar {
+        width: 55px;
+        height: 55px;
+        background: #dee1e6;
+    }
+    .chat-avatar i {
+        font-size: 1.2rem;
+        color: #3a3a3a;
+    }
+    .chat-header-actions .btn-icon {
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.12);
+    }
+    .chat-body {
+        background: url('https://www.transparenttextures.com/patterns/bright-squares.png'), #e5ddd5;
+        padding: 24px 20px 16px;
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .message-row {
+        display: flex;
+        flex-direction: column;
+        max-width: 75%;
+    }
+    .message-incoming {
+        align-self: flex-start;
+    }
+    .message-outgoing {
+        align-self: flex-end;
+    }
+    .message-bubble {
+        display: inline-block;
+        padding: 14px 16px;
+        border-radius: 22px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        word-break: break-word;
+    }
+    .message-incoming .message-bubble {
+        background: #ffffff;
+        border-bottom-left-radius: 4px;
+    }
+    .message-outgoing .message-bubble {
+        background: #dcf8c6;
+        border-bottom-right-radius: 4px;
+    }
+    .message-info {
+        font-size: 0.75rem;
+        color: #6a6a6a;
+    }
+    .attachment-preview {
+        width: 100%;
+        max-height: 240px;
+        object-fit: cover;
+    }
+    .audio-wrapper {
+        background: #f3f3f3;
+    }
+    .file-attachment {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: 100%;
+    }
+    .chat-footer {
+        border-top: 1px solid #dcdcdc;
+    }
+    .chat-footer form {
+        gap: 12px;
+    }
+    .chat-footer .form-control {
+        border-radius: 30px;
+        border: 1px solid #dadada;
+        padding: 14px 18px;
+        min-height: 48px;
+    }
+    .chat-footer .btn-success {
+        width: 48px;
+        min-width: 48px;
+        height: 48px;
+        border-radius: 50%;
+    }
+    .chat-footer .btn-light {
+        width: 48px;
+        min-width: 48px;
+        height: 48px;
+        border-radius: 50%;
+    }
+    .chat-footer label {
+        margin-bottom: 0;
+    }
+    .chat-footer #fichier-preview {
+        margin-left: 60px;
+    }
+    .empty-chat {
+        margin: auto;
+    }
+</style>
+
+<script>
+    const fichierInput = document.getElementById('fichier');
+    if (fichierInput) {
+        fichierInput.addEventListener('change', function() {
+            const preview = document.getElementById('fichier-preview');
+            const name = document.getElementById('fichier-name');
+            if (this.files.length > 0) {
+                name.textContent = this.files[0].name;
+                preview.classList.remove('d-none');
+            } else {
+                preview.classList.add('d-none');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatBody = document.getElementById('chat-body');
+        if (chatBody) {
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Diffuser une annonce - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card border-0 shadow p-4 bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+                    <h3 class="font-serif mb-0">Diffuser une Annonce</h3>
+                </div>
+
+                <div class="alert alert-warning small border-0 mb-4">
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>
+                    Les messages envoyés par ce formulaire apparaîtront immédiatement sous forme de notifications dans l'espace client/avocat des comptes ciblés.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-bold small">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-gold btn-lg w-100 mt-3">
+                        <i class="fa-solid fa-bullhorn me-2"></i>Envoyer la notification
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("id_destinataire").classList.add("form-select");
+        document.getElementById("id_message").classList.add("form-control");
+    });
+</script>
+{% endblock %}

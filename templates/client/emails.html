@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes Communications Mails - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h3 class="font-serif mb-4"><i class="fa-solid fa-envelope text-warning me-2"></i>Communications Email</h3>
+                <p class="small text-muted mb-4">Retrouvez ci-dessous l'historique des emails de notifications et confirmations automatiques envoyés par la plateforme à votre adresse.</p>
+
+                <div class="accordion" id="emailAccordion">
+                    {% for email in emails %}
+                        <div class="accordion-item border-0 mb-3 rounded shadow-sm overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed bg-light text-navy fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#email_{{ email.id }}">
+                                    <div class="w-100 d-flex justify-content-between align-items-center pe-3">
+                                        <span>{{ email.sujet }}</span>
+                                        <span class="small text-muted fw-normal" style="font-size: 0.8rem;">{{ email.sent_at|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="email_{{ email.id }}" class="accordion-collapse collapse" data-bs-parent="#emailAccordion">
+                                <div class="accordion-body bg-white border-top">
+                                    <div class="mb-3 small text-muted">
+                                        <strong>Destinataire :</strong> {{ email.destinataire }}<br>
+                                        <strong>Date d'envoi :</strong> {{ email.sent_at|date:"d F Y à H:i" }}
+                                    </div>
+                                    <div class="p-3 bg-light rounded" style="white-space: pre-line; font-size: 0.95rem; line-height: 1.6;">
+                                        {{ email.contenu }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-folder-open display-4 mb-3"></i>
+                            <p class="mb-0">Aucun email envoyé pour le moment.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

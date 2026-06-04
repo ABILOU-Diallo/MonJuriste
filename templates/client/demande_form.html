@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvelle demande de consultation - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-7 mx-auto">
+            <div class="card border-0 shadow p-4 bg-white" style="border-radius: 16px;">
+                <div class="d-flex align-items-center mb-4">
+                    <a href="{% url 'avocat_detail' avocat.id %}" class="btn btn-outline-secondary btn-sm me-3"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+                    <h3 class="font-serif mb-0">Demande de consultation</h3>
+                </div>
+
+                <div class="d-flex align-items-center p-3 border rounded bg-light mb-4">
+                    <div class="rounded-circle overflow-hidden me-3 shadow-sm" style="width: 60px; height: 60px; background-color: #e2e8f0; display: flex; justify-content: center; align-items: center;">
+                        {% if avocat.photo %}
+                            <img src="{{ avocat.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
+                        {% else %}
+                            <i class="fa-solid fa-user-tie text-secondary fs-3"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h5 class="font-serif mb-1">Maître {{ avocat.user.get_full_name }}</h5>
+                        <p class="small text-muted mb-0">Honoraires : <strong class="text-navy">{{ avocat.tarif_horaire }} FCFA / Heure</strong></p>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.sujet.id_for_label }}" class="form-label fw-bold small">Objet de la demande</label>
+                        {{ form.sujet }}
+                        <div class="form-text small text-muted">Soyez concis (ex: Problème de contrat de bail, convocation au tribunal).</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.description.id_for_label }}" class="form-label fw-bold small">Détail des faits juridiques</label>
+                        {{ form.description }}
+                        <div class="form-text small text-muted">Expliquez précisément votre situation pour permettre à l'avocat de préparer au mieux votre entretien.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-gold btn-lg w-100">
+                        <i class="fa-solid fa-credit-card me-2"></i>Valider et procéder au paiement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("id_sujet").classList.add("form-control");
+        document.getElementById("id_description").classList.add("form-control");
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Passerelle Mobile Money (Simulation) - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-5 mx-auto">
+            <div class="card border-0 shadow-lg bg-dark text-white p-4" style="border-radius: 24px; min-height: 480px;">
+                <div class="text-center my-3">
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-2">MODE SIMULATION</span>
+                    <h3 class="font-serif">Passerelle de Paiement</h3>
+                    <p class="text-light-50 small">Partenaire de transaction de confiance</p>
+                </div>
+
+                <div class="bg-secondary bg-opacity-25 rounded p-3 my-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-light-50 small">Opérateur</span>
+                        <span class="fw-bold text-warning">{{ paiement.get_moyen_paiement_display }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-light-50 small">Référence</span>
+                        <span class="small font-monospace">{{ paiement.transaction_id }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-light-50 small">Téléphone</span>
+                        <span>{{ user.telephone }}</span>
+                    </div>
+                    <hr class="border-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-light-50 small">Montant</span>
+                        <span class="fs-4 fw-bold text-warning">{{ paiement.montant }} FCFA</span>
+                    </div>
+                </div>
+
+                <div class="alert alert-light text-dark small mb-4 py-2 border-0">
+                    <i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>
+                    <strong>Test du cycle complet :</strong> Pour valider le flux et débloquer les plannings d'avocats, veuillez simuler le paiement réussi.
+                </div>
+
+                <form method="post" class="d-flex flex-column gap-3">
+                    {% csrf_token %}
+                    
+                    <button type="submit" name="action" value="SUCCESS" class="btn btn-success btn-lg py-3 fw-bold">
+                        <i class="fa-solid fa-circle-check me-2"></i>Simuler Paiement Réussi (SUCCESS)
+                    </button>
+                    
+                    <button type="submit" name="action" value="FAILED" class="btn btn-outline-danger btn-lg py-2">
+                        <i class="fa-solid fa-circle-xmark me-2"></i>Simuler Échec / Annulation (FAILED)
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 small text-light-50">
+                    <i class="fa-solid fa-lock text-success me-1"></i> Connexion chiffrée SSL
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

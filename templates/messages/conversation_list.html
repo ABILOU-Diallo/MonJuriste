@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes Conversations - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header text-center mb-5">
+        <h1 class="font-serif">Mes Discussions</h1>
+        <p class="mb-0">Échangez avec vos contacts de manière sécurisée.</p>
+    </div>
+
+    <div class="row g-4">
+        {% for conversation in conversations %}
+            <div class="col-md-6 col-lg-4">
+                <a href="{% url 'conversation_detail' conversation.id %}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 overflow-hidden hover-shadow" style="transition: transform 0.2s;">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="rounded-circle overflow-hidden me-3 shadow-sm" style="width: 60px; height: 60px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; flex-shrink: 0;">
+                                    {% if user.role == 'CLIENT' %}
+                                        {% if conversation.avocat.user.photo %}
+                                            <img src="{{ conversation.avocat.user.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
+                                        {% else %}
+                                            <i class="fa-solid fa-user-tie text-secondary" style="font-size: 1.5rem;"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        {% if conversation.client.user.photo %}
+                                            <img src="{{ conversation.client.user.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
+                                        {% else %}
+                                            <i class="fa-solid fa-user text-secondary" style="font-size: 1.5rem;"></i>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 text-dark fw-bold">
+                                        {% if user.role == 'CLIENT' %}
+                                            Maître {{ conversation.avocat.user.get_full_name }}
+                                        {% else %}
+                                            {{ conversation.client.user.get_full_name }}
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {% if conversation.get_latest_message %}
+                                            {{ conversation.get_latest_message.created_at|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            Créée le {{ conversation.created_at|date:"d/m/Y" }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-light p-2 rounded small text-muted" style="height: 50px; overflow: hidden;">
+                                {% if conversation.get_latest_message %}
+                                    <strong>{{ conversation.get_latest_message.sender.get_full_name }}:</strong>
+                                    {% if conversation.get_latest_message.contenu %}
+                                        {{ conversation.get_latest_message.contenu|truncatewords:10 }}
+                                    {% elif conversation.get_latest_message.file %}
+                                        <i class="fa-solid fa-paperclip me-1"></i>Fichier joint
+                                    {% endif %}
+                                {% else %}
+                                    <em>Aucun message pour le moment...</em>
+                                {% endif %}
+                            </div>
+                            
+                            {% if conversation.dossier %}
+                                <div class="mt-3 pt-3 border-top">
+                                    <small class="text-muted d-block mb-1">Dossier lié:</small>
+                                    <span class="badge bg-info text-white">{{ conversation.dossier.titre }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card border-0 p-5 text-center shadow-sm bg-light">
+                    <i class="fa-solid fa-comments display-3 text-muted mb-3"></i>
+                    <h4 class="text-muted mb-2">Aucune conversation</h4>
+                    <p class="text-muted mb-0">
+                        {% if user.role == 'CLIENT' %}
+                            Démarrez une discussion en contactant un avocat depuis la liste des avocats.
+                        {% else %}
+                            Vous n'avez pas encore de conversations. Elles apparaîtront ici lorsque les clients vous contacteront.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hover-shadow:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}

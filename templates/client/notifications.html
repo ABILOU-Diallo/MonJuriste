@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Mes Notifications - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="font-serif mb-0"><i class="fa-solid fa-bell text-warning me-2"></i>Mes Notifications</h3>
+                    
+                    {% if notifications %}
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'notifications_list' %}?action=read_all" class="btn btn-sm btn-outline-navy"><i class="fa-solid fa-envelope-open me-1"></i>Tout marquer lu</a>
+                            <a href="{% url 'notifications_list' %}?action=clear_all" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer toutes les notifications ?')"><i class="fa-solid fa-trash-can me-1"></i>Tout supprimer</a>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    {% for notif in notifications %}
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded {% if not notif.lu %}bg-light border-warning{% else %}bg-white{% endif %}" style="transition: var(--transition);">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="fs-4 text-warning mt-1">
+                                    <i class="fa-solid {% if not notif.lu %}fa-circle-dot{% else %}fa-envelope-open{% endif %}"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-1 {% if not notif.lu %}fw-bold{% endif %}">{{ notif.message }}</p>
+                                    <span class="small text-muted">{{ notif.created_at|date:"d/m/Y à H:i" }}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                {% if not notif.lu %}
+                                    <a href="{% url 'mark_notification_read' notif.id %}" class="btn btn-sm btn-outline-success" title="Marquer comme lu"><i class="fa-solid fa-check"></i></a>
+                                {% endif %}
+                                <a href="{% url 'delete_notification' notif.id %}" class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="fa-solid fa-trash"></i></a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-bell-slash display-4 mb-3"></i>
+                            <p class="mb-0">Vous n'avez aucune notification pour le moment.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

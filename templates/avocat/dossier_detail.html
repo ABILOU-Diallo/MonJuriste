@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails Affaire - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'avocat_dossiers' %}" class="btn btn-sm btn-outline-secondary me-3"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+        <h2 class="font-serif mb-0">Gestion du Dossier client</h2>
+    </div>
+
+    <div class="row g-4">
+        <!-- Details & Status Column -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-4 bg-white mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h3 class="font-serif text-navy mb-0">{{ dossier.titre }}</h3>
+                    <span class="badge {% if dossier.statut == 'TERMINE' %}bg-secondary{% elif dossier.statut == 'ACCEPTE' %}bg-success{% else %}bg-warning text-dark{% endif %} fs-6">
+                        {{ dossier.get_statut_display }}
+                    </span>
+                </div>
+                
+                <p class="text-muted" style="line-height: 1.6;">{{ dossier.description|linebreaksbr }}</p>
+
+                <!-- Update Status Form -->
+                <div class="border-top pt-3 mt-4">
+                    <h6 class="fw-bold text-primary mb-2">Modifier l'état d'avancement</h6>
+                    <form method="post" class="row g-2 align-items-center">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_status">
+                        <div class="col-md-8">
+                            <select name="statut" class="form-select form-select-sm">
+                                <option value="ACCEPTE" {% if dossier.statut == 'ACCEPTE' %}selected{% endif %}>En cours de traitement</option>
+                                <option value="EN_ATTENTE" {% if dossier.statut == 'EN_ATTENTE' %}selected{% endif %}>Suspendu / En attente de pièces</option>
+                                <option value="TERMINE" {% if dossier.statut == 'TERMINE' %}selected{% endif %}>Terminé / Archive</option>
+                                <option value="REJETE" {% if dossier.statut == 'REJETE' %}selected{% endif %}>Clôturé sans suite</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-sm btn-navy w-100">Appliquer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Documents Listing -->
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h5 class="font-serif text-primary mb-4"><i class="fa-solid fa-paperclip text-warning me-2"></i>Pièces jointes & Documents partagés</h5>
+                
+                <ul class="list-unstyled mb-0">
+                    {% for doc in documents %}
+                        <li class="d-flex justify-content-between align-items-center py-2 border-bottom small">
+                            <div>
+                                <i class="fa-regular fa-file-pdf text-danger me-2"></i>
+                                <span class="fw-semibold text-navy">{{ doc.titre }}</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">(Ajouté le {{ doc.uploaded_at|date:"d/m/Y" }} par {{ doc.uploaded_by.username }})</span>
+                            </div>
+                            <a href="{{ doc.fichier.url }}" download class="btn btn-sm btn-link text-warning p-0 text-decoration-none fw-bold"><i class="fa-solid fa-download me-1"></i>Télécharger</a>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted py-2 small text-center">Aucun document joint à cette affaire pour le moment.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Document Upload Column -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm p-4 bg-white mb-4" style="border-radius: 16px;">
+                <h5 class="font-serif text-primary mb-3"><i class="fa-solid fa-cloud-arrow-up text-warning me-2"></i>Ajouter une pièce jointe</h5>
+                <p class="small text-muted mb-4">Téléversez des pièces justificatives, des rapports d'audience ou des courriers de mise en demeure. Le client y aura accès instantanément.</p>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload_doc">
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.titre.id_for_label }}" class="form-label fw-bold small">Libellé du document</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.fichier.id_for_label }}" class="form-label fw-bold small">Sélectionner le fichier (PDF, Image, Doc)</label>
+                        {{ form.fichier }}
+                    </div>
+
+                    <button type="submit" class="btn btn-gold w-100 py-2"><i class="fa-solid fa-upload me-2"></i>Téléverser le document</button>
+                </form>
+            </div>
+
+            <!-- Client Info summary -->
+            <div class="card border-0 shadow-sm p-4 bg-primary text-white" style="border-radius: 16px;">
+                <h5 class="font-serif text-warning mb-3">Informations du Client</h5>
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-2"><strong>Nom complet :</strong> {{ dossier.client.user.get_full_name }}</li>
+                    <li class="mb-2"><strong>Email :</strong> {{ dossier.client.user.email }}</li>
+                    <li class="mb-2"><strong>Téléphone :</strong> {{ dossier.client.user.telephone }}</li>
+                    <li><strong>Adresse physique :</strong> {{ dossier.client.adresse|default:"Non renseignée" }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("id_titre").classList.add("form-control");
+        document.getElementById("id_fichier").classList.add("form-control");
+    });
+</script>
+{% endblock %}
