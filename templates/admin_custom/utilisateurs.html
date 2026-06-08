@@ -10,7 +10,14 @@
     </div>
 
     <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
-        <h5 class="font-serif text-primary mb-4"><i class="fa-solid fa-users-gear text-warning me-2"></i>Comptes enregistrés</h5>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <h5 class="font-serif text-primary mb-0"><i class="fa-solid fa-users-gear text-warning me-2"></i>Comptes enregistrés</h5>
+            <div class="btn-group btn-group-sm">
+                <a href="{% url 'admin_utilisateurs' %}" class="btn btn-outline-secondary {% if not role_filter %}active{% endif %}">Tous</a>
+                <a href="{% url 'admin_utilisateurs' %}?role=CLIENT" class="btn btn-outline-secondary {% if role_filter == 'CLIENT' %}active{% endif %}">Clients</a>
+                <a href="{% url 'admin_utilisateurs' %}?role=AVOCAT" class="btn btn-outline-secondary {% if role_filter == 'AVOCAT' %}active{% endif %}">Avocats</a>
+            </div>
+        </div>
         
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -49,7 +56,21 @@
                             </td>
                             <td class="small text-muted">{{ u.date_joined|date:"d/m/Y" }}</td>
                             <td class="text-end px-3">
-                                <a href="{% url 'admin_modifier_utilisateur' u.id %}" class="btn btn-sm btn-outline-navy"><i class="fa-solid fa-pen-to-square"></i> Modifier</a>
+                                <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                    <a href="{% url 'admin_modifier_utilisateur' u.id %}" class="btn btn-sm btn-outline-navy">
+                                        <i class="fa-solid fa-pen-to-square"></i> Modifier
+                                    </a>
+                                    {% if not u.is_superuser and u.id != request.user.id %}
+                                        <form method="post" action="{% url 'admin_delete_user' u.id %}" class="d-inline"
+                                              onsubmit="return confirm('Supprimer définitivement le compte « {{ u.username }} » ({{ u.get_full_name|default:u.username }}) ? Cette action est irréversible.');">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next" value="admin_utilisateurs">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer le compte">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </td>
                         </tr>
                     {% empty %}

@@ -6,53 +6,69 @@
 <div class="container">
     <div class="page-header text-center mb-5">
         <h1 class="font-serif">Suivi de mes Dossiers</h1>
-        <p class="mb-0">Consultez l'historique et les pièces jointes de vos affaires juridiques en cours.</p>
+        <p class="mb-0">Créez vos dossiers et suivez l'avancement de vos affaires juridiques.</p>
     </div>
 
     <div class="row g-4">
-        {% for dos in dossiers %}
-            <div class="col-md-6">
-                <div class="card card-glass border-0 p-4 h-100 bg-white">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h4 class="font-serif text-primary mb-0">{{ dos.titre }}</h4>
-                        <span class="badge {% if dos.statut == 'TERMINE' %}bg-secondary{% elif dos.statut == 'ACCEPTE' %}bg-success{% else %}bg-warning text-dark{% endif %}">
-                            {{ dos.get_statut_display }}
-                        </span>
-                    </div>
-
-                    <p class="text-muted small mb-3">{{ dos.description|linebreaksbr }}</p>
-                    
-                    <div class="border-top pt-3">
-                        <h6 class="fw-bold small text-navy mb-2"><i class="fa-solid fa-paperclip me-2 text-warning"></i>Pièces jointes & Documents ({{ dos.documents.count }})</h6>
-                        
-                        <ul class="list-unstyled mb-0">
-                            {% for doc in dos.documents.all %}
-                                <li class="d-flex justify-content-between align-items-center py-2 border-bottom small">
-                                    <span class="text-muted"><i class="fa-regular fa-file-pdf me-2 text-danger"></i>{{ doc.titre }}</span>
-                                    <a href="{{ doc.fichier.url }}" download class="btn btn-sm btn-link text-warning p-0 text-decoration-none fw-bold"><i class="fa-solid fa-download me-1"></i>Télécharger</a>
-                                </li>
-                            {% empty %}
-                                <li class="text-muted py-2 small">Aucun document joint pour le moment.</li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
-                        <span>Avocat en charge : Maître {{ dos.avocat.user.get_full_name }}</span>
-                        <span>Ouvert le : {{ dos.created_at|date:"d/m/Y" }}</span>
-                    </div>
-                </div>
+        <!-- Formulaire de création -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h4 class="font-serif text-primary mb-3"><i class="fa-solid fa-folder-plus text-warning me-2"></i>Créer un dossier</h4>
+                {% if avocats_eligibles %}
+                    <p class="small text-muted mb-4">Ouvrez un dossier de suivi auprès d'un avocat avec lequel vous avez une consultation payée ou un rendez-vous accepté.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.avocat.id_for_label }}" class="form-label fw-bold small">{{ form.avocat.label }}</label>
+                            {{ form.avocat }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.titre.id_for_label }}" class="form-label fw-bold small">{{ form.titre.label }}</label>
+                            {{ form.titre }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label fw-bold small">{{ form.description.label }}</label>
+                            {{ form.description }}
+                        </div>
+                        <button type="submit" class="btn btn-gold w-100 mt-2"><i class="fa-solid fa-circle-check me-1"></i>Créer le dossier</button>
+                    </form>
+                {% else %}
+                    <p class="small text-muted mb-4">Pour créer un dossier, vous devez d'abord effectuer une consultation payée ou obtenir l'acceptation d'un rendez-vous.</p>
+                    <a href="{% url 'avocat_list' %}" class="btn btn-gold w-100"><i class="fa-solid fa-user-tie me-1"></i>Trouver un avocat</a>
+                {% endif %}
             </div>
-        {% empty %}
-            <div class="col-12">
-                <div class="card border-0 p-5 text-center shadow-sm">
-                    <i class="fa-solid fa-folder-closed display-3 text-muted mb-3"></i>
-                    <h4>Aucun dossier juridique en cours</h4>
-                    <p class="text-muted">Vos dossiers s'affichent ici dès que vos consultations sont validées et lancées par vos avocats.</p>
-                    <a href="{% url 'avocat_list' %}" class="btn btn-gold mx-auto mt-3"><i class="fa-solid fa-plus me-1"></i>Trouver un Avocat</a>
-                </div>
+        </div>
+
+        <!-- Liste des dossiers -->
+        <div class="col-lg-8">
+            <div class="row g-4">
+                {% for dos in dossiers %}
+                    <div class="col-md-6">
+                        <div class="card card-glass border-0 p-4 h-100 bg-white">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h4 class="font-serif text-primary mb-0">{{ dos.titre }}</h4>
+                                <span class="badge {% if dos.statut == 'TERMINE' %}bg-secondary{% elif dos.statut == 'ACCEPTE' %}bg-success{% elif dos.statut == 'REJETE' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {{ dos.get_statut_display }}
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-3">{{ dos.description|truncatewords:25 }}</p>
+                            <div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center small text-muted">
+                                <span>Maître {{ dos.avocat.user.get_full_name }}</span>
+                                <a href="{% url 'dossier_detail_client' dos.id %}" class="btn btn-sm btn-outline-navy">Voir le dossier</a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="card border-0 p-5 text-center shadow-sm">
+                            <i class="fa-solid fa-folder-closed display-3 text-muted mb-3"></i>
+                            <h4>Aucun dossier juridique</h4>
+                            <p class="text-muted">Créez votre premier dossier une fois votre consultation validée.</p>
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

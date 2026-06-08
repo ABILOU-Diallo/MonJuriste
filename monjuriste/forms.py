@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import User, ClientProfile, AvocatProfile, DemandeConsultation, RendezVous, Note, DocumentDossier, CreneauHoraire, Conge, Specialite, Message, MessageFile
+from .models import User, ClientProfile, AvocatProfile, DemandeConsultation, RendezVous, Note, DocumentDossier, Dossier, CreneauHoraire, Conge, Specialite, Message, MessageFile
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(max_length=150, required=True, label="Prénom")
@@ -33,6 +33,9 @@ class LawyerRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True, label="Adresse Email")
     telephone = forms.CharField(max_length=20, required=True, label="Téléphone professionnel")
     tarif_horaire = forms.DecimalField(max_digits=10, decimal_places=2, initial=0.0, label="Tarif Horaire (FCFA)")
+    cabinet = forms.CharField(max_length=200, required=True, label="Cabinet / Étude")
+    ville = forms.CharField(max_length=100, required=True, label="Ville")
+    annees_experience = forms.IntegerField(min_value=0, initial=0, label="Années d'expérience")
     description = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=True, label="Description professionnelle")
     specialites = forms.ModelMultipleChoiceField(
         queryset=Specialite.objects.all(),
@@ -53,6 +56,9 @@ class LawyerRegistrationForm(UserCreationForm):
             user.save()
             profile = user.avocat_profile
             profile.tarif_horaire = self.cleaned_data['tarif_horaire']
+            profile.cabinet = self.cleaned_data['cabinet']
+            profile.ville = self.cleaned_data['ville']
+            profile.annees_experience = self.cleaned_data['annees_experience']
             profile.description = self.cleaned_data['description']
             profile.is_approved = False # En attente de validation admin
             profile.specialites.set(self.cleaned_data['specialites'])
@@ -103,9 +109,13 @@ class AvocatProfileForm(forms.ModelForm):
 
     class Meta:
         model = AvocatProfile
-        fields = ('tarif_horaire', 'description', 'specialites')
+        fields = ('tarif_horaire', 'cabinet', 'ville', 'annees_experience', 'description', 'specialites')
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
+            'tarif_horaire': forms.NumberInput(attrs={'class': 'form-control'}),
+            'cabinet': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Cabinet Ewondo'}),
+            'ville': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Yaoundé'}),
+            'annees_experience': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-control'}),
             'specialites': forms.CheckboxSelectMultiple(),
         }
 
@@ -170,6 +180,24 @@ class DocumentDossierForm(forms.ModelForm):
         widgets = {
             'titre': forms.TextInput(attrs={'placeholder': 'Ex: Contrat de bail, Lettre de mise en demeure'}),
         }
+
+
+class DossierForm(forms.ModelForm):
+    class Meta:
+        model = Dossier
+        fields = ('avocat', 'titre', 'description')
+        widgets = {
+            'titre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: Litige foncier Bonapriso'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Décrivez votre affaire et vos objectifs...'}),
+            'avocat': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, avocats_eligibles=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['avocat'].queryset = avocats_eligibles or AvocatProfile.objects.none()
+        self.fields['avocat'].label = "Avocat concerné"
+        self.fields['titre'].label = "Intitulé / Titre de l'affaire"
+        self.fields['description'].label = "Description de l'affaire"
 
 
 class CreneauHoraireForm(forms.ModelForm):

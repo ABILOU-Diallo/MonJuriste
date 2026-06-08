@@ -16,7 +16,7 @@
                     {% endif %}
                 </div>
                 <h5 class="font-serif mb-1">Maître {{ request.user.get_full_name }}</h5>
-                <p class="text-muted small">Cabinet d'avocat</p>
+                <p class="text-muted small">{{ request.user.avocat_profile.cabinet|default:"Cabinet d'avocat" }}</p>
                 <hr>
                 <p class="text-muted small mb-0">
                     <i class="fa-envelope me-2 fa-solid"></i>{{ request.user.email }}<br>
@@ -78,6 +78,22 @@
                     <div class="mb-3">
                         <label for="{{ form.tarif_horaire.id_for_label }}" class="form-label fw-bold small">Honoraires de consultation (FCFA / Heure)</label>
                         {{ form.tarif_horaire }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.cabinet.id_for_label }}" class="form-label fw-bold small">Cabinet / Étude</label>
+                            {{ form.cabinet }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.ville.id_for_label }}" class="form-label fw-bold small">Ville</label>
+                            {{ form.ville }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.annees_experience.id_for_label }}" class="form-label fw-bold small">Années d'expérience</label>
+                        {{ form.annees_experience }}
                     </div>
 
                     <div class="mb-3">

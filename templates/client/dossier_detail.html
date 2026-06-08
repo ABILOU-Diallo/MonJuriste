@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Dossier - MonJuriste{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{% url 'dossier_list_client' %}" class="btn btn-sm btn-outline-secondary me-3"><i class="fa-solid fa-arrow-left"></i> Retour</a>
+        <h2 class="font-serif mb-0">Mon dossier juridique</h2>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm p-4 bg-white mb-4" style="border-radius: 16px;">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h3 class="font-serif text-navy mb-0">{{ dossier.titre }}</h3>
+                    <span class="badge {% if dossier.statut == 'TERMINE' %}bg-secondary{% elif dossier.statut == 'ACCEPTE' %}bg-success{% elif dossier.statut == 'REJETE' %}bg-danger{% else %}bg-warning text-dark{% endif %} fs-6">
+                        {{ dossier.get_statut_display }}
+                    </span>
+                </div>
+                <p class="text-muted" style="line-height: 1.6;">{{ dossier.description|linebreaksbr }}</p>
+                <div class="border-top pt-3 mt-3 small text-muted">
+                    <span>Avocat : Maître {{ dossier.avocat.user.get_full_name }}</span>
+                    <span class="ms-3">Créé le : {{ dossier.created_at|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+                <h5 class="font-serif text-primary mb-4"><i class="fa-solid fa-paperclip text-warning me-2"></i>Pièces jointes ({{ documents.count }})</h5>
+                <ul class="list-unstyled mb-0">
+                    {% for doc in documents %}
+                        <li class="d-flex justify-content-between align-items-center py-2 border-bottom small">
+                            <div>
+                                <i class="fa-regular fa-file-pdf text-danger me-2"></i>
+                                <span class="fw-semibold text-navy">{{ doc.titre }}</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">(Ajouté le {{ doc.uploaded_at|date:"d/m/Y" }})</span>
+                            </div>
+                            <a href="{{ doc.fichier.url }}" download class="btn btn-sm btn-link text-warning p-0 text-decoration-none fw-bold"><i class="fa-solid fa-download me-1"></i>Télécharger</a>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted py-2 small text-center">Aucun document joint pour le moment.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            {% if dossier.statut != 'REJETE' and dossier.statut != 'TERMINE' %}
+            <div class="card border-0 shadow-sm p-4 bg-white mb-4" style="border-radius: 16px;">
+                <h5 class="font-serif text-primary mb-3"><i class="fa-solid fa-cloud-arrow-up text-warning me-2"></i>Ajouter une pièce jointe</h5>
+                <p class="small text-muted mb-4">Téléversez vos pièces justificatives. L'avocat pourra les consulter.</p>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="upload_doc">
+                    <div class="mb-3">
+                        <label for="{{ form.titre.id_for_label }}" class="form-label fw-bold small">Libellé du document</label>
+                        {{ form.titre }}
+                    </div>
+                    <div class="mb-4">
+                        <label for="{{ form.fichier.id_for_label }}" class="form-label fw-bold small">Fichier (PDF, Image, Doc)</label>
+                        {{ form.fichier }}
+                    </div>
+                    <button type="submit" class="btn btn-gold w-100 py-2"><i class="fa-solid fa-upload me-2"></i>Téléverser</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var titre = document.getElementById("id_titre");
+        var fichier = document.getElementById("id_fichier");
+        if (titre) titre.classList.add("form-control");
+        if (fichier) fichier.classList.add("form-control");
+    });
+</script>
+{% endblock %}

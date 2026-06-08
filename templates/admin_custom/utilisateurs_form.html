@@ -35,6 +35,25 @@
                         <i class="fa-solid fa-floppy-disk me-2"></i>Enregistrer les modifications
                     </button>
                 </form>
+
+                {% if not target_user.is_superuser and target_user.id != request.user.id %}
+                <hr class="my-4">
+                <div class="border border-danger rounded p-3 bg-danger bg-opacity-10">
+                    <h5 class="text-danger font-serif mb-2"><i class="fa-solid fa-triangle-exclamation me-2"></i>Zone de danger</h5>
+                    <p class="small text-muted mb-3">
+                        La suppression efface définitivement le compte, le profil associé et toutes les données liées
+                        (demandes, dossiers, messages…). Cette action est irréversible.
+                    </p>
+                    <form method="post" action="{% url 'admin_delete_user' target_user.id %}"
+                          onsubmit="return confirm('Confirmer la suppression définitive du compte « {{ target_user.username }} » ?');">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="admin_utilisateurs">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fa-solid fa-trash-can me-2"></i>Supprimer ce compte
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

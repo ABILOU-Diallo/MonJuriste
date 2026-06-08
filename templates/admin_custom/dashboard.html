@@ -67,7 +67,19 @@
                                     <td class="small">{{ avo.user.email }}</td>
                                     <td class="small">{{ avo.user.telephone }}</td>
                                     <td class="text-end px-3">
-                                        <a href="{% url 'admin_approve_lawyer' avo.id %}" class="btn btn-sm btn-success"><i class="fa-solid fa-check me-1"></i>Approuver</a>
+                                        <div class="d-flex gap-1 justify-content-end">
+                                            <a href="{% url 'admin_approve_lawyer' avo.id %}" class="btn btn-sm btn-success">
+                                                <i class="fa-solid fa-check me-1"></i>Approuver
+                                            </a>
+                                            <form method="post" action="{% url 'admin_delete_user' avo.user.id %}" class="d-inline"
+                                                  onsubmit="return confirm('Refuser et supprimer le compte de Maître {{ avo.user.get_full_name|escapejs }} ?');">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="next" value="admin_dashboard">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer le compte">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             {% empty %}

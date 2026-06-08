@@ -25,6 +25,7 @@ urlpatterns = [
     path('client/paiement/<int:demande_id>/', views.paiement_form, name='paiement_form'),
     path('client/paiement/process/<str:transaction_id>/', views.paiement_process, name='paiement_process'),
     path('client/dossiers/', views.dossier_list_client, name='dossier_list_client'),
+    path('client/dossiers/<int:pk>/', views.dossier_detail_client, name='dossier_detail_client'),
     path('client/rendezvous/', views.rendezvous_list_client, name='rendezvous_list_client'),
     path('client/rendezvous/<int:pk>/annuler/', views.rendezvous_annuler_client, name='rendezvous_annuler_client'),
 

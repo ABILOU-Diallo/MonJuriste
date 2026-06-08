@@ -19,8 +19,8 @@ class CustomUserAdmin(UserAdmin):
     )
 
 class AvocatProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'tarif_horaire', 'is_approved', 'note_moyenne', 'total_avis')
-    list_filter = ('is_approved', 'specialites')
+    list_display = ('user', 'cabinet', 'ville', 'annees_experience', 'tarif_horaire', 'is_approved', 'note_moyenne', 'total_avis')
+    list_filter = ('is_approved', 'ville', 'specialites')
     search_fields = ('user__last_name', 'user__first_name', 'description')
     actions = ['approve_lawyers']
 

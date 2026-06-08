@@ -19,7 +19,7 @@ from .forms import (
     CustomUserCreationForm, LawyerRegistrationForm, ClientProfileForm,
     AvocatProfileForm, DemandeConsultationForm, RendezVousForm, NoteForm,
     DocumentDossierForm, CreneauHoraireForm, CongeForm, AdminNotificationForm,
-    UserRoleForm, MessageForm, MessageFileForm
+    UserRoleForm, MessageForm, MessageFileForm, DossierForm
 )
 from .decorators import role_required, RoleRequiredMixin
 from .services import OrangeMoneyService, MTNMoneyService
@@ -32,21 +32,27 @@ from .utils import create_notification, send_automatic_email
 def visitor_index(request):
     """
     Page d'accueil de la plateforme avec présentation, liste des spécialités,
-    et statistiques générales.
+    profils avocats et statistiques générales.
     """
     specialites = Specialite.objects.annotate(num_avocats=Count('avocats')).order_by('-num_avocats')[:6]
-    avocats_premium = AvocatProfile.objects.filter(is_approved=True).order_by('-user__date_joined')[:3]
+    avocats = (
+        AvocatProfile.objects.filter(is_approved=True)
+        .select_related('user')
+        .prefetch_related('specialites')
+        .order_by('-user__date_joined')
+    )
     
     # Statistiques publiques
     stats = {
-        'total_avocats': AvocatProfile.objects.filter(is_approved=True).count(),
+        'total_avocats': avocats.count(),
         'total_clients': ClientProfile.objects.count(),
         'total_dossiers': Dossier.objects.count(),
     }
     
     return render(request, 'visitor/index.html', {
         'specialites': specialites,
-        'avocats_premium': avocats_premium,
+        'avocats': avocats,
+        'avocats_premium': avocats[:3],
         'stats': stats,
     })
 
@@ -137,6 +143,20 @@ def dashboard_redirect(request):
 # 2. CLIENT VIEWS (AUTHENTIFIÉ)
 # ==========================================
 
+def _avocats_eligibles_pour_dossier(client_profile):
+    """Avocats avec lesquels le client a une consultation payée ou un RDV accepté."""
+    avocat_ids_demande = DemandeConsultation.objects.filter(
+        client=client_profile,
+        statut__in=['PAYEE', 'ACCEPTEE', 'TERMINEE'],
+    ).values_list('avocat_id', flat=True)
+    avocat_ids_rdv = RendezVous.objects.filter(
+        client=client_profile,
+        statut='ACCEPTE',
+    ).values_list('avocat_id', flat=True)
+    avocat_ids = set(avocat_ids_demande) | set(avocat_ids_rdv)
+    return AvocatProfile.objects.filter(id__in=avocat_ids, is_approved=True)
+
+
 @login_required
 @role_required('CLIENT')
 def client_dashboard(request):
@@ -162,31 +182,64 @@ def client_dashboard(request):
 @role_required('CLIENT')
 def avocat_list(request):
     """
-    Liste des avocats approuvés avec filtres par spécialité et recherche textuelle.
+    Liste des avocats approuvés avec filtres (nom, ville, spécialité) et tri.
     """
-    query = request.GET.get('q', '')
-    specialite_id = request.GET.get('specialite', '')
-    
-    avocats = AvocatProfile.objects.filter(is_approved=True)
-    
-    if query:
+    nom = request.GET.get('nom', '').strip()
+    ville = request.GET.get('ville', '').strip()
+    specialite_id = request.GET.get('specialite', '').strip()
+    tri = request.GET.get('tri', 'nom_asc')
+
+    avocats = (
+        AvocatProfile.objects.filter(is_approved=True)
+        .select_related('user')
+        .prefetch_related('specialites')
+        .annotate(note_avg=Avg('notes__note'))
+    )
+
+    if nom:
         avocats = avocats.filter(
-            Q(user__first_name__icontains=query) |
-            Q(user__last_name__icontains=query) |
-            Q(description__icontains=query)
+            Q(user__first_name__icontains=nom) |
+            Q(user__last_name__icontains=nom) |
+            Q(cabinet__icontains=nom)
         )
-        
+
+    if ville:
+        avocats = avocats.filter(ville__icontains=ville)
+
     if specialite_id:
         avocats = avocats.filter(specialites__id=specialite_id)
-        
+
     avocats = avocats.distinct()
-    specialites = Specialite.objects.annotate(num_avocats=Count('avocats'))
-    
+
+    sort_map = {
+        'nom_asc': ('user__last_name', 'user__first_name'),
+        'nom_desc': ('-user__last_name', '-user__first_name'),
+        'experience_desc': ('-annees_experience', 'user__last_name'),
+        'experience_asc': ('annees_experience', 'user__last_name'),
+        'ville_asc': ('ville', 'user__last_name'),
+        'note_desc': ('-note_avg', 'user__last_name'),
+        'tarif_asc': ('tarif_horaire', 'user__last_name'),
+        'tarif_desc': ('-tarif_horaire', 'user__last_name'),
+    }
+    avocats = avocats.order_by(*sort_map.get(tri, sort_map['nom_asc']))
+
+    specialites = Specialite.objects.annotate(num_avocats=Count('avocats', filter=Q(avocats__is_approved=True)))
+    villes = (
+        AvocatProfile.objects.filter(is_approved=True)
+        .exclude(ville='')
+        .values_list('ville', flat=True)
+        .distinct()
+        .order_by('ville')
+    )
+
     return render(request, 'client/avocat_list.html', {
         'avocats': avocats,
         'specialites': specialites,
-        'query': query,
-        'selected_specialite': int(specialite_id) if specialite_id else None
+        'villes': villes,
+        'filtre_nom': nom,
+        'filtre_ville': ville,
+        'selected_specialite': int(specialite_id) if specialite_id.isdigit() else None,
+        'selected_tri': tri,
     })
 
 
@@ -358,10 +411,75 @@ def paiement_process(request, transaction_id):
 @role_required('CLIENT')
 def dossier_list_client(request):
     """
-    Suivi des dossiers en cours par le client.
+    Suivi et création des dossiers par le client.
     """
-    dossiers = Dossier.objects.filter(client=request.user.client_profile)
-    return render(request, 'client/dossiers.html', {'dossiers': dossiers})
+    client_profile = request.user.client_profile
+    avocats_eligibles = _avocats_eligibles_pour_dossier(client_profile)
+    dossiers = Dossier.objects.filter(client=client_profile).select_related('avocat__user')
+
+    if request.method == 'POST':
+        form = DossierForm(request.POST, avocats_eligibles=avocats_eligibles)
+        if form.is_valid():
+            dossier = form.save(commit=False)
+            dossier.client = client_profile
+            dossier.statut = 'EN_ATTENTE'
+            demande = DemandeConsultation.objects.filter(
+                client=client_profile,
+                avocat=dossier.avocat,
+                statut__in=['PAYEE', 'ACCEPTEE'],
+            ).exclude(dossier__isnull=False).first()
+            if demande:
+                dossier.demande = demande
+            dossier.save()
+            create_notification(
+                dossier.avocat.user,
+                f"Nouveau dossier à valider : « {dossier.titre} » de {request.user.get_full_name()}.",
+            )
+            messages.success(request, "Votre dossier a été créé. L'avocat doit le valider avant le suivi.")
+            return redirect('dossier_list_client')
+    else:
+        form = DossierForm(avocats_eligibles=avocats_eligibles)
+
+    return render(request, 'client/dossiers.html', {
+        'dossiers': dossiers,
+        'form': form,
+        'avocats_eligibles': avocats_eligibles,
+    })
+
+
+@login_required
+@role_required('CLIENT')
+def dossier_detail_client(request, pk):
+    """
+    Détail d'un dossier client avec possibilité d'ajouter des pièces jointes.
+    """
+    client_profile = request.user.client_profile
+    dossier = get_object_or_404(Dossier, pk=pk, client=client_profile)
+    documents = dossier.documents.all()
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'upload_doc':
+            form = DocumentDossierForm(request.POST, request.FILES)
+            if form.is_valid():
+                doc = form.save(commit=False)
+                doc.dossier = dossier
+                doc.uploaded_by = request.user
+                doc.save()
+                create_notification(
+                    dossier.avocat.user,
+                    f"Nouveau document « {doc.titre} » ajouté au dossier « {dossier.titre} ».",
+                )
+                messages.success(request, "Document ajouté au dossier.")
+                return redirect('dossier_detail_client', pk=dossier.id)
+    else:
+        form = DocumentDossierForm()
+
+    return render(request, 'client/dossier_detail.html', {
+        'dossier': dossier,
+        'documents': documents,
+        'form': form,
+    })
 
 
 @login_required
@@ -690,17 +808,13 @@ def avocat_rendezvous(request):
                 f"Bonjour,\n\nL'avocat Maître {rdv.avocat.user.last_name} a mis à jour l'état de votre rendez-vous du {rdv.date_heure}.\n\nStatut actuel : {rdv.get_statut_display()}\n\nCordialement,\nL'équipe MonJuriste"
             )
             
-            # Si le rendez-vous est accepté, on crée automatiquement un Dossier s'il n'en existe pas déjà un pour cette demande
+            # Le client crée le dossier après acceptation du rendez-vous
             if statut == 'ACCEPTE' and rdv.demande and not Dossier.objects.filter(demande=rdv.demande).exists():
-                Dossier.objects.create(
-                    client=rdv.client,
-                    avocat=avocat_profile,
-                    demande=rdv.demande,
-                    titre=rdv.demande.sujet,
-                    description=rdv.demande.description,
-                    statut='ACCEPTE' # En cours
+                create_notification(
+                    rdv.client.user,
+                    f"Votre rendez-vous pour « {rdv.demande.sujet} » a été accepté. "
+                    f"Créez votre dossier de suivi depuis votre espace client.",
                 )
-                create_notification(rdv.client.user, f"Un dossier de suivi a été automatiquement ouvert pour : {rdv.demande.sujet}.")
 
             messages.success(request, f"Rendez-vous mis à jour ({rdv.get_statut_display()}).")
             return redirect('avocat_rendezvous')
@@ -712,76 +826,52 @@ def avocat_rendezvous(request):
 @role_required('AVOCAT')
 def avocat_dossiers(request):
     """
-    Gestion des dossiers clients de l'avocat.
+    Consultation des dossiers clients de l'avocat (lecture seule).
     """
     avocat_profile = request.user.avocat_profile
-    dossiers = Dossier.objects.filter(avocat=avocat_profile)
-    
-    if request.method == 'POST':
-        # Création directe d'un dossier
-        client_id = request.POST.get('client_id')
-        client = get_object_or_404(ClientProfile, id=client_id)
-        titre = request.POST.get('titre')
-        description = request.POST.get('description')
-        
-        if titre and description:
-            Dossier.objects.create(
-                client=client,
-                avocat=avocat_profile,
-                titre=titre,
-                description=description,
-                statut='ACCEPTE'
-            )
-            create_notification(client.user, f"Maître {request.user.last_name} a ouvert un nouveau dossier : {titre}.")
-            messages.success(request, "Dossier client créé avec succès.")
-            return redirect('avocat_dossiers')
-            
-    clients = ClientProfile.objects.all()
-    return render(request, 'avocat/dossiers.html', {'dossiers': dossiers, 'clients': clients})
+    dossiers = Dossier.objects.filter(avocat=avocat_profile).select_related('client__user')
+    return render(request, 'avocat/dossiers.html', {'dossiers': dossiers})
 
 
 @login_required
 @role_required('AVOCAT')
 def avocat_dossier_detail(request, pk):
     """
-    Détail d'un dossier de suivi avec possibilité d'ajouter des fichiers / pièces jointes.
+    Consultation d'un dossier avec possibilité de validation (accepter / rejeter).
     """
     avocat_profile = request.user.avocat_profile
     dossier = get_object_or_404(Dossier, pk=pk, avocat=avocat_profile)
     documents = dossier.documents.all()
-    
-    # Formulaire de dépôt de document
+
     if request.method == 'POST':
         action = request.POST.get('action')
-        
-        if action == 'upload_doc':
-            form = DocumentDossierForm(request.POST, request.FILES)
-            if form.is_valid():
-                doc = form.save(commit=False)
-                doc.dossier = dossier
-                doc.uploaded_by = request.user
-                doc.save()
-                
-                # Notification de dépôt au client
-                create_notification(dossier.client.user, f"Un nouveau document '{doc.titre}' a été ajouté à votre dossier par l'avocat.")
-                messages.success(request, "Document ajouté au dossier.")
-                return redirect('avocat_dossier_detail', pk=dossier.id)
-                
-        elif action == 'update_status':
-            nouveau_statut = request.POST.get('statut')
-            if nouveau_statut in ['EN_ATTENTE', 'ACCEPTE', 'REJETE', 'TERMINE']:
-                dossier.statut = nouveau_statut
+        if action == 'validate' and dossier.statut == 'EN_ATTENTE':
+            decision = request.POST.get('decision')
+            if decision in ['ACCEPTE', 'REJETE']:
+                dossier.statut = decision
                 dossier.save()
-                create_notification(dossier.client.user, f"Le statut de votre dossier '{dossier.titre}' a été modifié : {dossier.get_statut_display()}.")
-                messages.success(request, "Statut du dossier mis à jour.")
+                if dossier.demande and decision == 'ACCEPTE':
+                    dossier.demande.statut = 'ACCEPTEE'
+                    dossier.demande.save()
+                create_notification(
+                    dossier.client.user,
+                    f"Votre dossier « {dossier.titre} » a été {dossier.get_statut_display().lower()} par l'avocat.",
+                )
+                messages.success(request, f"Dossier {dossier.get_statut_display().lower()}.")
                 return redirect('avocat_dossier_detail', pk=dossier.id)
-    else:
-        form = DocumentDossierForm()
-        
+        elif action == 'cloturer' and dossier.statut == 'ACCEPTE':
+            dossier.statut = 'TERMINE'
+            dossier.save()
+            create_notification(
+                dossier.client.user,
+                f"Votre dossier « {dossier.titre} » a été clôturé par l'avocat.",
+            )
+            messages.success(request, "Dossier clôturé.")
+            return redirect('avocat_dossier_detail', pk=dossier.id)
+
     return render(request, 'avocat/dossier_detail.html', {
         'dossier': dossier,
         'documents': documents,
-        'form': form
     })
 
 
@@ -876,7 +966,13 @@ def admin_utilisateurs(request):
     Gestion globale des comptes utilisateurs (activation, modification, etc.).
     """
     utilisateurs = User.objects.all().order_by('-date_joined')
-    return render(request, 'admin_custom/utilisateurs.html', {'utilisateurs': utilisateurs})
+    role_filter = request.GET.get('role', '')
+    if role_filter in ('CLIENT', 'AVOCAT', 'ADMIN'):
+        utilisateurs = utilisateurs.filter(role=role_filter)
+    return render(request, 'admin_custom/utilisateurs.html', {
+        'utilisateurs': utilisateurs,
+        'role_filter': role_filter,
+    })
 
 
 @login_required
@@ -903,16 +999,30 @@ def admin_modifier_utilisateur(request, user_id):
 @role_required('ADMIN')
 def admin_supprimer_utilisateur(request, user_id):
     """
-    Suppression définitive d'un compte utilisateur par l'administrateur.
+    Suppression définitive d'un compte utilisateur (client, avocat ou admin) par l'administrateur.
     """
+    if request.method != 'POST':
+        messages.error(request, "Action non autorisée.")
+        return redirect('admin_utilisateurs')
+
     user = get_object_or_404(User, id=user_id)
+
     if user.is_superuser:
         messages.error(request, "Impossible de supprimer un superutilisateur.")
+    elif user.id == request.user.id:
+        messages.error(request, "Vous ne pouvez pas supprimer votre propre compte.")
+    elif user.role not in ('CLIENT', 'AVOCAT', 'ADMIN'):
+        messages.error(request, "Ce type de compte ne peut pas être supprimé depuis cette interface.")
     else:
         username = user.username
+        role_label = user.get_role_display()
         user.delete()
-        messages.success(request, f"L'utilisateur {username} a été supprimé avec succès.")
-    return redirect('admin_utilisateurs')
+        messages.success(request, f"Le compte {role_label} « {username} » a été supprimé définitivement.")
+
+    next_url = request.POST.get('next', 'admin_utilisateurs')
+    if next_url not in ('admin_utilisateurs', 'admin_dashboard'):
+        next_url = 'admin_utilisateurs'
+    return redirect(next_url)
 
 
 @login_required

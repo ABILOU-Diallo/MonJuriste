@@ -1,97 +1,60 @@
 {% extends 'base.html' %}
 
-{% block title %}Mes Dossiers Clients - MonJuriste{% endblock %}
+{% block title %}Dossiers Clients - MonJuriste{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="page-header text-center mb-5">
-        <h1 class="font-serif">Suivi des Dossiers Clients</h1>
-        <p class="mb-0">Consultez, mettez à jour et partagez des pièces justificatives avec vos clients.</p>
+        <h1 class="font-serif">Dossiers Clients</h1>
+        <p class="mb-0">Consultez les dossiers ouverts par vos clients et validez-les.</p>
     </div>
 
-    <div class="row g-4">
-        <!-- Add new Dossier form card -->
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
-                <h4 class="font-serif text-primary mb-3"><i class="fa-solid fa-folder-plus text-warning me-2"></i>Ouvrir un Dossier</h4>
-                <p class="small text-muted mb-4">Créez un dossier de suivi pour un client existant.</p>
-                
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="client_id" class="form-label fw-bold small">Sélectionner le Client</label>
-                        <select name="client_id" id="client_id" class="form-select" required>
-                            <option value="">-- Choisir un client --</option>
-                            {% for c in clients %}
-                                <option value="{{ c.id }}">{{ c.user.get_full_name }} ({{ c.user.username }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="titre" class="form-label fw-bold small">Intitulé / Titre de l'affaire</label>
-                        <input type="text" name="titre" id="titre" class="form-control" placeholder="Ex: Litige foncier Bonapriso" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="description" class="form-label fw-bold small">Brève description / Objectifs</label>
-                        <textarea name="description" id="description" class="form-control" rows="4" placeholder="Décrivez les grandes lignes de la procédure..." required></textarea>
-                    </div>
-
-                    <button type="submit" class="btn btn-gold w-100 mt-2"><i class="fa-solid fa-circle-check me-1"></i>Ouvrir le dossier</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Dossiers List Column -->
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
-                <h4 class="font-serif text-primary mb-4"><i class="fa-solid fa-folder-open text-warning me-2"></i>Dossiers actifs</h4>
-                
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="px-3">Titre de l'affaire</th>
-                                <th>Client</th>
-                                <th>Statut</th>
-                                <th>Dernière modif.</th>
-                                <th class="text-end px-3">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for dos in dossiers %}
-                                <tr>
-                                    <td class="px-3 fw-semibold text-navy">{{ dos.titre }}</td>
-                                    <td class="small">{{ dos.client.user.get_full_name }}</td>
-                                    <td>
-                                        {% if dos.statut == 'EN_ATTENTE' %}
-                                            <span class="badge bg-warning text-dark">Suspendu</span>
-                                        {% elif dos.statut == 'ACCEPTE' %}
-                                            <span class="badge bg-success text-white">En cours</span>
-                                        {% elif dos.statut == 'REJETE' %}
-                                            <span class="badge bg-danger text-white">Rejeté</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary text-white">Terminé</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="small text-muted">{{ dos.updated_at|date:"d/m/Y" }}</td>
-                                    <td class="text-end px-3">
-                                        <a href="{% url 'avocat_dossier_detail' dos.id %}" class="btn btn-sm btn-outline-navy">Gérer <i class="fa-solid fa-chevron-right ms-1"></i></a>
-                                    </td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="5" class="text-center py-4 text-muted">
-                                        Aucun dossier ouvert pour le moment.
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="card border-0 shadow-sm p-4 bg-white" style="border-radius: 16px;">
+        <h4 class="font-serif text-primary mb-4"><i class="fa-solid fa-folder-open text-warning me-2"></i>Dossiers reçus</h4>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-3">Titre de l'affaire</th>
+                        <th>Client</th>
+                        <th>Statut</th>
+                        <th>Date de création</th>
+                        <th class="text-end px-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dos in dossiers %}
+                        <tr>
+                            <td class="px-3 fw-semibold text-navy">{{ dos.titre }}</td>
+                            <td class="small">{{ dos.client.user.get_full_name }}</td>
+                            <td>
+                                {% if dos.statut == 'EN_ATTENTE' %}
+                                    <span class="badge bg-warning text-dark">En attente de validation</span>
+                                {% elif dos.statut == 'ACCEPTE' %}
+                                    <span class="badge bg-success text-white">En cours</span>
+                                {% elif dos.statut == 'REJETE' %}
+                                    <span class="badge bg-danger text-white">Rejeté</span>
+                                {% else %}
+                                    <span class="badge bg-secondary text-white">Terminé</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ dos.created_at|date:"d/m/Y" }}</td>
+                            <td class="text-end px-3">
+                                <a href="{% url 'avocat_dossier_detail' dos.id %}" class="btn btn-sm btn-outline-navy">
+                                    {% if dos.statut == 'EN_ATTENTE' %}Valider{% else %}Consulter{% endif %}
+                                    <i class="fa-solid fa-chevron-right ms-1"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                Aucun dossier reçu pour le moment.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

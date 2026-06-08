@@ -70,6 +70,9 @@ class Command(BaseCommand):
             )
             profile = avo_user.avocat_profile
             profile.tarif_horaire = 25000.00
+            profile.cabinet = "Cabinet Dupont"
+            profile.ville = "Douala"
+            profile.annees_experience = 12
             profile.description = (
                 "Titulaire d'un Doctorat en droit privé, Maître Charles Dupont exerce depuis plus de 10 ans "
                 "dans la résolution des litiges contractuels, des procédures de licenciement et du droit social. "
@@ -99,6 +102,9 @@ class Command(BaseCommand):
             )
             profile2 = avo_user2.avocat_profile
             profile2.tarif_horaire = 15000.00
+            profile2.cabinet = "Cabinet Momo & Associés"
+            profile2.ville = "Yaoundé"
+            profile2.annees_experience = 6
             profile2.description = (
                 "Spécialiste du droit de la famille et des affaires matrimoniales. Maître Alice Momo propose "
                 "ses services pour les conciliations, divorces, successions et gardes d'enfants à Yaoundé."

@@ -1,116 +1,339 @@
 {% extends 'base.html' %}
 
-{% block title %}Trouver un Avocat - MonJuriste{% endblock %}
+{% block title %}Avocats - MonJuriste{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avocats-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+    }
+
+    .avocats-page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 1.25rem;
+    }
+
+    .avocats-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .avocats-filters input,
+    .avocats-filters select {
+        flex: 1 1 160px;
+        min-width: 140px;
+        padding: 0.55rem 0.85rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: #fff;
+        color: #374151;
+    }
+
+    .avocats-filters input::placeholder {
+        color: #9ca3af;
+    }
+
+    .avocats-filters input:focus,
+    .avocats-filters select:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .btn-rechercher {
+        flex: 0 0 auto;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0.55rem 1.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-rechercher:hover {
+        background: #1d4ed8;
+        color: #fff;
+    }
+
+    .avocats-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .avocats-count {
+        color: #6b7280;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .avocats-sort {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .avocats-sort label {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .avocats-sort select {
+        padding: 0.45rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        background: #fff;
+        min-width: 200px;
+    }
+
+    .avocats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    @media (max-width: 768px) {
+        .avocats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .avocat-card {
+        display: flex;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        min-height: 180px;
+        transition: box-shadow 0.2s;
+    }
+
+    .avocat-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .avocat-card-photo {
+        flex: 0 0 42%;
+        max-width: 42%;
+        background: #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .avocat-card-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        min-height: 180px;
+    }
+
+    .avocat-card-photo .placeholder-icon {
+        font-size: 3.5rem;
+        color: #9ca3af;
+    }
+
+    .avocat-card-body {
+        flex: 1;
+        padding: 1rem 1.1rem;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .avocat-card-name {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #2563eb;
+        margin: 0 0 0.15rem;
+        line-height: 1.3;
+    }
+
+    .avocat-card-cabinet {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin: 0 0 0.6rem;
+    }
+
+    .avocat-card-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .badge-exp {
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+    }
+
+    .badge-ville {
+        background: #374151;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+    }
+
+    .avocat-card-specs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .spec-tag {
+        font-size: 0.72rem;
+        padding: 0.15rem 0.5rem;
+        border: 1px solid #374151;
+        border-radius: 4px;
+        background: #fff;
+        color: #374151;
+    }
+
+    .avocat-card-action {
+        margin-top: auto;
+        text-align: right;
+    }
+
+    .btn-consultation {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border: 1.5px solid #2563eb;
+        border-radius: 8px;
+        color: #2563eb;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #fff;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-consultation:hover {
+        background: #2563eb;
+        color: #fff;
+    }
+
+    .avocats-empty {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 3rem 1rem;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header text-center mb-5">
-        <h1 class="font-serif">Nos Avocats Partenaires</h1>
-        <p class="mb-0">Trouvez et consultez les meilleurs experts juridiques du Cameroun.</p>
+<div class="avocats-page">
+    <h1 class="avocats-page-title">Avocats</h1>
+
+    <form method="get" action="{% url 'avocat_list' %}" class="avocats-filters" id="filters-form">
+        <input type="text" name="nom" placeholder="Nom de l'avocat" value="{{ filtre_nom }}">
+        <input type="text" name="ville" placeholder="Ville" value="{{ filtre_ville }}" list="villes-list">
+        <datalist id="villes-list">
+            {% for v in villes %}
+                <option value="{{ v }}">
+            {% endfor %}
+        </datalist>
+        <select name="specialite" aria-label="Spécialité">
+            <option value="">Toutes les spécialités</option>
+            {% for spec in specialites %}
+                <option value="{{ spec.id }}" {% if selected_specialite == spec.id %}selected{% endif %}>{{ spec.nom }}</option>
+            {% endfor %}
+        </select>
+        <input type="hidden" name="tri" id="tri-hidden" value="{{ selected_tri }}">
+        <button type="submit" class="btn-rechercher">Rechercher</button>
+    </form>
+
+    <div class="avocats-toolbar">
+        <p class="avocats-count">{{ avocats|length }} avocat{{ avocats|length|pluralize }} trouvé{{ avocats|length|pluralize }}</p>
+        <div class="avocats-sort">
+            <label for="tri-select">Trier par</label>
+            <select id="tri-select" aria-label="Trier les avocats">
+                <option value="nom_asc" {% if selected_tri == 'nom_asc' %}selected{% endif %}>Nom (A → Z)</option>
+                <option value="nom_desc" {% if selected_tri == 'nom_desc' %}selected{% endif %}>Nom (Z → A)</option>
+                <option value="experience_desc" {% if selected_tri == 'experience_desc' %}selected{% endif %}>Expérience (↓)</option>
+                <option value="experience_asc" {% if selected_tri == 'experience_asc' %}selected{% endif %}>Expérience (↑)</option>
+                <option value="ville_asc" {% if selected_tri == 'ville_asc' %}selected{% endif %}>Ville (A → Z)</option>
+                <option value="note_desc" {% if selected_tri == 'note_desc' %}selected{% endif %}>Meilleures notes</option>
+                <option value="tarif_asc" {% if selected_tri == 'tarif_asc' %}selected{% endif %}>Tarif (↑)</option>
+                <option value="tarif_desc" {% if selected_tri == 'tarif_desc' %}selected{% endif %}>Tarif (↓)</option>
+            </select>
+        </div>
     </div>
 
-    <div class="row g-4">
-        <!-- Filter Column -->
-        <div class="col-lg-3">
-            <div class="card border-0 shadow-sm p-4 bg-white sticky-top" style="border-radius: 16px; top: 100px; z-index: 10;">
-                <h5 class="font-serif mb-4"><i class="fa-solid fa-filter text-warning me-2"></i>Filtres</h5>
-                
-                <form method="get" action="{% url 'avocat_list' %}">
-                    <!-- Search Input -->
-                    <div class="mb-3">
-                        <label for="search" class="form-label small fw-bold">Recherche</label>
-                        <div class="input-group">
-                            <input type="text" name="q" id="search" class="form-control" placeholder="Nom, description..." value="{{ query }}">
-                            <button type="submit" class="btn btn-navy"><i class="fa-solid fa-magnifying-glass"></i></button>
-                        </div>
+    <div class="avocats-grid">
+        {% for avo in avocats %}
+            <article class="avocat-card">
+                <div class="avocat-card-photo">
+                    {% if avo.user.photo %}
+                        <img src="{{ avo.user.photo.url }}" alt="{{ avo.user.get_full_name }}">
+                    {% else %}
+                        <i class="fa-solid fa-user-tie placeholder-icon"></i>
+                    {% endif %}
+                </div>
+                <div class="avocat-card-body">
+                    <h2 class="avocat-card-name">{{ avo.user.get_full_name }}</h2>
+                    <p class="avocat-card-cabinet">{{ avo.cabinet|default:"Cabinet d'avocat" }}</p>
+                    <div class="avocat-card-badges">
+                        {% if avo.annees_experience %}
+                            <span class="badge-exp">{{ avo.annees_experience }} an{{ avo.annees_experience|pluralize:"s" }} d'expérience</span>
+                        {% endif %}
+                        {% if avo.ville %}
+                            <span class="badge-ville">{{ avo.ville }}</span>
+                        {% endif %}
                     </div>
-                    
-                    <!-- Specialties list filter -->
-                    <div class="mb-4">
-                        <label class="form-label small fw-bold">Spécialité</label>
-                        <div class="d-flex flex-column gap-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="specialite" id="spec_all" value="" {% if not selected_specialite %}checked{% endif %} onchange="this.form.submit()">
-                                <label class="form-check-label small" for="spec_all">
-                                    Toutes les spécialités
-                                </label>
-                            </div>
-                            {% for spec in specialites %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="specialite" id="spec_{{ spec.id }}" value="{{ spec.id }}" {% if selected_specialite == spec.id %}checked{% endif %} onchange="this.form.submit()">
-                                    <label class="form-check-label small" for="spec_{{ spec.id }}">
-                                        {{ spec.nom }} ({{ spec.num_avocats }})
-                                    </label>
-                                </div>
-                            {% endfor %}
-                        </div>
+                    <div class="avocat-card-specs">
+                        {% for spec in avo.specialites.all %}
+                            <span class="spec-tag">{{ spec.nom }}</span>
+                        {% endfor %}
                     </div>
-                    
-                    <a href="{% url 'avocat_list' %}" class="btn btn-sm btn-outline-secondary w-100">Réinitialiser</a>
-                </form>
+                    <div class="avocat-card-action">
+                        <a href="{% url 'demande_creer' avo.id %}" class="btn-consultation">Demander une consultation</a>
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <div class="avocats-empty">
+                <i class="fa-solid fa-user-slash display-4 text-muted mb-3"></i>
+                <h4>Aucun avocat trouvé</h4>
+                <p class="text-muted mb-3">Modifiez vos critères de recherche ou réinitialisez les filtres.</p>
+                <a href="{% url 'avocat_list' %}" class="btn btn-outline-primary btn-sm">Réinitialiser</a>
             </div>
-        </div>
-
-        <!-- Lawyer Listing Column -->
-        <div class="col-lg-9">
-            <div class="row g-4">
-                {% for avo in avocats %}
-                    <div class="col-md-6 col-lg-6">
-                        <div class="card card-glass border-0 h-100 overflow-hidden">
-                            <div style="height: 200px; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative;">
-                                {% if avo.user.photo %}
-                                    <img src="{{ avo.user.photo.url }}" class="w-100 h-100" style="object-fit: cover;">
-                                {% else %}
-                                    <i class="fa-solid fa-user-tie text-secondary" style="font-size: 5rem;"></i>
-                                {% endif %}
-                                <div class="position-absolute bottom-0 start-0 bg-dark text-white px-3 py-1 m-2 rounded small fw-bold">
-                                    {{ avo.tarif_horaire }} FCFA / H
-                                </div>
-                            </div>
-                            <div class="card-body p-4 d-flex flex-column">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="font-serif card-title mb-0">Maître {{ avo.user.get_full_name }}</h5>
-                                    <span class="rating-stars small">
-                                        <i class="fa-solid fa-star"></i> {{ avo.note_moyenne }} <span class="text-muted">({{ avo.total_avis }})</span>
-                                    </span>
-                                </div>
-                                <p class="card-text small text-muted text-truncate mb-3">{{ avo.description }}</p>
-                                
-                                <div class="mb-4">
-                                    {% for spec in avo.specialites.all %}
-                                        <span class="badge bg-light text-secondary border me-1">{{ spec.nom }}</span>
-                                    {% endfor %}
-                                </div>
-                                
-                                <div class="mt-auto row g-2">
-                                    <div class="col-12">
-                                        <a href="{% url 'start_conversation' avo.id %}" class="btn btn-sm btn-outline-primary w-100">
-                                            <i class="fa-solid fa-comments me-1"></i>Discuter
-                                        </a>
-                                    </div>
-                                </div>
-                                <div class="row g-2 mt-2">
-                                    <div class="col-6">
-                                        <a href="{% url 'avocat_detail' avo.id %}" class="btn btn-sm btn-outline-navy w-100">Voir profil</a>
-                                    </div>
-                                    <div class="col-6">
-                                        <a href="{% url 'demande_creer' avo.id %}" class="btn btn-sm btn-gold w-100"><i class="fa-solid fa-calendar-plus me-1"></i>Consulter</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% empty %}
-                    <div class="col-12">
-                        <div class="card border-0 p-5 text-center shadow-sm">
-                            <i class="fa-solid fa-user-slash display-3 text-muted mb-3"></i>
-                            <h4>Aucun avocat trouvé</h4>
-                            <p class="text-muted">Essayez de modifier vos critères de recherche ou de réinitialiser les filtres.</p>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
+
+<script>
+    document.getElementById('tri-select').addEventListener('change', function() {
+        document.getElementById('tri-hidden').value = this.value;
+        document.getElementById('filters-form').submit();
+    });
+</script>
 {% endblock %}

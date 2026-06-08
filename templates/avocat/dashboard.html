@@ -76,7 +76,7 @@
             <div class="card border-0 shadow-sm" style="border-radius: 16px;">
                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                     <h5 class="font-serif mb-0"><i class="fa-solid fa-briefcase text-warning me-2"></i>Dossiers clients en cours de traitement</h5>
-                    <a href="{% url 'avocat_dossiers' %}" class="btn btn-sm btn-navy"><i class="fa-solid fa-folder-plus me-1"></i>Ouvrir un dossier</a>
+                    <a href="{% url 'avocat_dossiers' %}" class="btn btn-sm btn-navy"><i class="fa-solid fa-folder-open me-1"></i>Voir les dossiers</a>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -96,7 +96,7 @@
                                         <td>{{ dos.client.user.get_full_name }}</td>
                                         <td class="small text-muted">{{ dos.created_at|date:"d/m/Y" }}</td>
                                         <td class="text-end px-4">
-                                            <a href="{% url 'avocat_dossier_detail' dos.id %}" class="btn btn-sm btn-outline-navy">Gérer</a>
+                                            <a href="{% url 'avocat_dossier_detail' dos.id %}" class="btn btn-sm btn-outline-navy">Consulter</a>
                                         </td>
                                     </tr>
                                 {% empty %}

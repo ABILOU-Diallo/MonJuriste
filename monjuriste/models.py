@@ -55,6 +55,9 @@ class AvocatProfile(models.Model):
     specialites = models.ManyToManyField(Specialite, related_name='avocats', blank=True)
     tarif_horaire = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     description = models.TextField(blank=True)
+    cabinet = models.CharField(max_length=200, blank=True, verbose_name="Cabinet / Étude")
+    ville = models.CharField(max_length=100, blank=True, verbose_name="Ville")
+    annees_experience = models.PositiveIntegerField(default=0, verbose_name="Années d'expérience")
     is_approved = models.BooleanField(default=False, verbose_name="Approuvé par l'admin")
 
     class Meta:
