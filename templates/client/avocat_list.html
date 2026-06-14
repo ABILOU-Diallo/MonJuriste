@@ -173,6 +173,20 @@
         margin: 0 0 0.6rem;
     }
 
+    .avocat-card-ville {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin: 0 0 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .avocat-card-ville i {
+        font-size: 0.75rem;
+        color: #2563eb;
+    }
+
     .avocat-card-badges {
         display: flex;
         flex-wrap: wrap;
@@ -214,9 +228,12 @@
         color: #374151;
     }
 
-    .avocat-card-action {
+    .avocat-card-actions {
         margin-top: auto;
-        text-align: right;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .btn-consultation {
@@ -235,6 +252,44 @@
 
     .btn-consultation:hover {
         background: #2563eb;
+        color: #fff;
+    }
+
+    .btn-discuter {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border: 1.5px solid #10b981;
+        border-radius: 8px;
+        color: #10b981;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #fff;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-discuter:hover {
+        background: #10b981;
+        color: #fff;
+    }
+
+    .btn-voir-plus {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border: 1.5px solid #6b7280;
+        border-radius: 8px;
+        color: #6b7280;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #fff;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-voir-plus:hover {
+        background: #6b7280;
         color: #fff;
     }
 
@@ -301,21 +356,36 @@
                 <div class="avocat-card-body">
                     <h2 class="avocat-card-name">{{ avo.user.get_full_name }}</h2>
                     <p class="avocat-card-cabinet">{{ avo.cabinet|default:"Cabinet d'avocat" }}</p>
+                    
+                    <!-- Affichage de la ville -->
+                    <div class="avocat-card-ville">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>{{ avo.ville|default:"Ville non spécifiée" }}</span>
+                    </div>
+                    
                     <div class="avocat-card-badges">
                         {% if avo.annees_experience %}
                             <span class="badge-exp">{{ avo.annees_experience }} an{{ avo.annees_experience|pluralize:"s" }} d'expérience</span>
                         {% endif %}
-                        {% if avo.ville %}
-                            <span class="badge-ville">{{ avo.ville }}</span>
-                        {% endif %}
                     </div>
                     <div class="avocat-card-specs">
-                        {% for spec in avo.specialites.all %}
+                        {% for spec in avo.specialites.all|slice:":3" %}
                             <span class="spec-tag">{{ spec.nom }}</span>
                         {% endfor %}
+                        {% if avo.specialites.all|length > 3 %}
+                            <span class="spec-tag">+{{ avo.specialites.all|length|add:"-3" }}</span>
+                        {% endif %}
                     </div>
-                    <div class="avocat-card-action">
-                        <a href="{% url 'demande_creer' avo.id %}" class="btn-consultation">Demander une consultation</a>
+                    <div class="avocat-card-actions">
+                        <a href="{% url 'start_conversation' avo.id %}" class="btn-discuter">
+                            <i class="fa-solid fa-comments me-1"></i>Discuter
+                        </a>
+                        <a href="{% url 'avocat_detail' avo.id %}" class="btn-voir-plus">
+                            <i class="fa-solid fa-eye me-1"></i>Voir plus
+                        </a>
+                        <a href="{% url 'demande_creer' avo.id %}" class="btn-consultation">
+                            <i class="fa-solid fa-calendar-check me-1"></i>Consulter
+                        </a>
                     </div>
                 </div>
             </article>

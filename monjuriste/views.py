@@ -625,6 +625,11 @@ def profil_edit(request):
     Édition du compte pour modifier le profil, le mot de passe ou désactiver le compte.
     Filtre par type de profil.
     """
+    # Initialisation des variables par défaut
+    form = None
+    password_form = PasswordChangeForm(request.user)  # ← TOUJOURS défini
+    
+    # Déterminer le profil et le template en fonction du rôle
     if request.user.role == 'CLIENT':
         profile = request.user.client_profile
         form_class = ClientProfileForm
@@ -634,11 +639,11 @@ def profil_edit(request):
         form_class = AvocatProfileForm
         template = 'avocat/profil.html'
     else:
-        # Administrateur
+        # Administrateur ou autre
         profile = None
         form_class = None
         template = 'client/profil.html'
-        
+    
     if request.method == 'POST':
         action = request.POST.get('action')
         
@@ -649,13 +654,15 @@ def profil_edit(request):
                 form.save()
                 messages.success(request, "Profil mis à jour avec succès.")
                 return redirect('profil_edit')
+            else:
+                messages.error(request, "Erreur lors de la mise à jour du profil.")
                 
         # 2. Changement de mot de passe
         elif action == 'change_password':
             password_form = PasswordChangeForm(request.user, request.POST)
             if password_form.is_valid():
                 user = password_form.save()
-                update_session_auth_hash(request, user) # Évite la déconnexion
+                update_session_auth_hash(request, user)  # Évite la déconnexion
                 messages.success(request, "Votre mot de passe a été modifié.")
                 return redirect('profil_edit')
             else:
@@ -669,10 +676,11 @@ def profil_edit(request):
             logout(request)
             messages.info(request, "Votre compte a été désactivé.")
             return redirect('visitor_index')
-    else:
-        form = form_class(instance=profile) if form_class else None
-        password_form = PasswordChangeForm(request.user)
-        
+    
+    # En GET ou après traitement POST sans redirection
+    if form is None and form_class:
+        form = form_class(instance=profile)
+    
     return render(request, template, {
         'form': form,
         'password_form': password_form
